@@ -31,7 +31,6 @@ router.post('/push', (req, res, next) => {
       status: 'Failed',
       reason: `Executable exit with status code ${execReturnCode}`,
     });
-    // shell.exit(1);
   }
   return res.json({
     status: 'Completed',
@@ -51,7 +50,6 @@ router.post('/create', (req, res, next) => {
       status: 'Failed',
       reason: `Executable exit with status code ${execReturnCode}`,
     });
-    // shell.exit(1);
   }
   return res.json({
     status: 'Completed',
@@ -71,7 +69,6 @@ router.post('/delete', (req, res, next) => {
       status: 'Failed',
       reason: `Executable exit with status code ${execReturnCode}`,
     });
-    // shell.exit(1);
   }
   return res.json({
     status: 'Completed',
@@ -91,7 +88,6 @@ router.post('/branch/create', (req, res, next) => {
       status: 'Failed',
       reason: `Executable exit with status code ${execReturnCode}`,
     });
-    // shell.exit(1);
   }
   return res.json({
     status: 'Completed',
@@ -111,7 +107,6 @@ router.post('/branch/delete', (req, res, next) => {
       status: 'Failed',
       reason: `Executable exit with status code ${execReturnCode}`,
     });
-    // shell.exit(1);
   }
   return res.json({
     status: 'Completed',
@@ -131,7 +126,6 @@ router.post('/tag/create', (req, res, next) => {
       status: 'Failed',
       reason: `Executable exit with status code ${execReturnCode}`,
     });
-    // shell.exit(1);
   }
   return res.json({
     status: 'Completed',
@@ -151,7 +145,6 @@ router.post('/tag/delete', (req, res, next) => {
       status: 'Failed',
       reason: `Executable exit with status code ${execReturnCode}`,
     });
-    // shell.exit(1);
   }
   return res.json({
     status: 'Completed',
@@ -171,7 +164,6 @@ router.post('/fork', (req, res, next) => {
       status: 'Failed',
       reason: `Executable exit with status code ${execReturnCode}`,
     });
-    // shell.exit(1);
   }
   return res.json({
     status: 'Completed',
@@ -191,7 +183,6 @@ router.post('/release/publish', (req, res, next) => {
       status: 'Failed',
       reason: `Executable exit with status code ${execReturnCode}`,
     });
-    // shell.exit(1);
   }
   return res.json({
     status: 'Completed',
@@ -211,7 +202,6 @@ router.post('/release/update', (req, res, next) => {
       status: 'Failed',
       reason: `Executable exit with status code ${execReturnCode}`,
     });
-    // shell.exit(1);
   }
   return res.json({
     status: 'Completed',
@@ -231,7 +221,6 @@ router.post('/release/delete', (req, res, next) => {
       status: 'Failed',
       reason: `Executable exit with status code ${execReturnCode}`,
     });
-    // shell.exit(1);
   }
   return res.json({
     status: 'Completed',

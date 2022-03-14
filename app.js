@@ -51,8 +51,8 @@ app.use(bodyParser.urlencoded({ extended: true, verify: rawBodySaver }));
 
 const { issuesRoutes, pullRoutes, repoRoutes } = require('./routes');
 
-app.use('/api/issues', issuesRoutes);
-app.use('/api/pull', pullRoutes);
+app.use('/api/issues', VerifySignature, issuesRoutes);
+app.use('/api/pull', VerifySignature, pullRoutes);
 app.use('/api/repo', VerifySignature, repoRoutes);
 
 // catch 404 and forward to error handler
