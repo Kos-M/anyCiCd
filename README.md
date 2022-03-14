@@ -32,22 +32,22 @@
 ```http
   GET /api/issues
 ```
-##### Issues ⌛
+##### Issues  ☑️
 - /api/issues/open
 - /api/issues/close
 - /api/issues/reopen
 - /api/issues/update
-##### Issue Labeled ⌛
+##### Issue Labeled ☑️
 - /api/issues/label/clear
 - /api/issues/label/update
-##### Issue Comment ⌛
+##### Issue Comment ☑️
 - /api/issues/comment/create
 - /api/issues/comment/update
 - /api/issues/comment/delete
-##### Issue Assigned ⌛
+##### Issue Assigned ☑️
 - /api/issues/assign
 - /api/issues/unassign
-##### Issue Milistoned ⌛
+##### Issue Milistoned ☑️
 - /api/issues/milistone
 - /api/issues/demilistone
 

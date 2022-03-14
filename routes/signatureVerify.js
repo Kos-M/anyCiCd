@@ -5,8 +5,9 @@ const sigHeaderName = 'x-gitea-signature';
 const sigHashAlg = 'sha256';
 
 function VerifySignature(req, res, next) {
-  if (!req.body) {
-    return next('Request body empty');
+  if (!req.body || !req.rawBody) {
+    res.setHeader('Content-Type', 'application/json');
+    return res.status(400).json({ error: 'Request body empty' });
   }
 
   const headerSignature = Buffer.from(req.get(sigHeaderName) || '', 'utf8');
@@ -15,7 +16,7 @@ function VerifySignature(req, res, next) {
 
   if (headerSignature.length !== digest.length
      || !crypto.timingSafeEqual(digest, headerSignature)) {
-    return next(`Request body digest (${digest}) did not match ${sigHeaderName} (${headerSignature})`);
+    return res.status(400).json({ error: 'Data validation failed', reason: `Request body digest (${digest}) did not match ${sigHeaderName} (${headerSignature})` });
   }
   return next();
 }

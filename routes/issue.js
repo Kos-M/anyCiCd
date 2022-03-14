@@ -28,6 +28,7 @@ router.post('/open', (req, res, next) => {
       reason: 'Not defined executable script for this event',
     });
   }
+  if (req.body.action !== 'opened') return res.end();
   const execReturnCode = shell.exec(`${openExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
@@ -47,6 +48,7 @@ router.post('/close', (req, res, next) => {
       reason: 'Not defined executable script for this event',
     });
   }
+  if (req.body.action !== 'closed') return res.end();
   const execReturnCode = shell.exec(`${closeExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
@@ -66,6 +68,7 @@ router.post('/reopen', (req, res, next) => {
       reason: 'Not defined executable script for this event',
     });
   }
+  if (req.body.action !== 'reopened') return res.end();
   const execReturnCode = shell.exec(`${reopenExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
@@ -85,6 +88,7 @@ router.post('/update', (req, res, next) => {
       reason: 'Not defined executable script for this event',
     });
   }
+  if (req.body.action !== 'edited') return res.end();
   const execReturnCode = shell.exec(`${updateExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
@@ -104,6 +108,7 @@ router.post('/label/clear', (req, res, next) => {
       reason: 'Not defined executable script for this event',
     });
   }
+  if (req.body.action !== 'label_cleared') return res.end();
   const execReturnCode = shell.exec(`${labelClearExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
@@ -123,6 +128,7 @@ router.post('/label/update', (req, res, next) => {
       reason: 'Not defined executable script for this event',
     });
   }
+  if (req.body.action !== 'label_updated') return res.end();
   const execReturnCode = shell.exec(`${labelUpdateExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
@@ -142,6 +148,7 @@ router.post('/comment/create', (req, res, next) => {
       reason: 'Not defined executable script for this event',
     });
   }
+  if (req.body.action !== 'created') return res.end();
   const execReturnCode = shell.exec(`${commentCreateExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
@@ -161,6 +168,7 @@ router.post('/comment/update', (req, res, next) => {
       reason: 'Not defined executable script for this event',
     });
   }
+  if (req.body.action !== 'edited') return res.end();
   const execReturnCode = shell.exec(`${commentUpdateExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
@@ -180,6 +188,7 @@ router.post('/comment/delete', (req, res, next) => {
       reason: 'Not defined executable script for this event',
     });
   }
+  if (req.body.action !== 'deleted') return res.end();
   const execReturnCode = shell.exec(`${commentDeleteExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
@@ -199,6 +208,7 @@ router.post('/assign', (req, res, next) => {
       reason: 'Not defined executable script for this event',
     });
   }
+  if (req.body.action !== 'assigned') return res.end();
   const execReturnCode = shell.exec(`${assignExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
@@ -218,6 +228,7 @@ router.post('/unassign', (req, res, next) => {
       reason: 'Not defined executable script for this event',
     });
   }
+  if (req.body.action !== 'unassigned') return res.end();
   const execReturnCode = shell.exec(`${unassignExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
@@ -237,6 +248,7 @@ router.post('/milistone', (req, res, next) => {
       reason: 'Not defined executable script for this event',
     });
   }
+  if (req.body.action !== 'milestoned') return res.end();
   const execReturnCode = shell.exec(`${milistoneExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
@@ -256,6 +268,7 @@ router.post('/demilistone', (req, res, next) => {
       reason: 'Not defined executable script for this event',
     });
   }
+  if (req.body.action !== 'demilestoned') return res.end();
   const execReturnCode = shell.exec(`${demilistoneExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
