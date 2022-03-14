@@ -15,13 +15,8 @@ const tagDeleteExec = process.env.repo_tag_delete || null;
 const forkExec = process.env.repo_fork || null;
 
 const releasePublishExec = process.env.repo_release_publish || null;
-
 const releaseUpdateExec = process.env.repo_release_update || null;
-
 const releaseDeleteExec = process.env.repo_release_delete || null;
-// const releasePublishExec = process.env.repo_fork || null;
-
-
 
 router.post('/push', (req, res, next) => {
   if (!pushExec) {
@@ -163,7 +158,7 @@ router.post('/tag/delete', (req, res, next) => {
   });
 });
 
-router.post('/repo/fork', (req, res, next) => {
+router.post('/fork', (req, res, next) => {
   if (!forkExec) {
     return res.status(500).json({
       status: 'Failed',
@@ -183,7 +178,7 @@ router.post('/repo/fork', (req, res, next) => {
   });
 });
 
-router.post('/repo/release/publish', (req, res, next) => {
+router.post('/release/publish', (req, res, next) => {
   if (!releasePublishExec) {
     return res.status(500).json({
       status: 'Failed',
@@ -203,7 +198,7 @@ router.post('/repo/release/publish', (req, res, next) => {
   });
 });
 
-router.post('/repo/release/update', (req, res, next) => {
+router.post('/release/update', (req, res, next) => {
   if (!releaseUpdateExec) {
     return res.status(500).json({
       status: 'Failed',
@@ -223,7 +218,7 @@ router.post('/repo/release/update', (req, res, next) => {
   });
 });
 
-router.post('/repo/release/delete', (req, res, next) => {
+router.post('/release/delete', (req, res, next) => {
   if (!releaseDeleteExec) {
     return res.status(500).json({
       status: 'Failed',
@@ -242,6 +237,5 @@ router.post('/repo/release/delete', (req, res, next) => {
     status: 'Completed',
   });
 });
-
 
 module.exports = router;
