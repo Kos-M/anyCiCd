@@ -20,9 +20,9 @@
 - /api/repo/tag/create
 - /api/repo/tag/delete
 
-##### Repository Fork ⌛
+##### Repository Fork  ☑️
 - /api/repo/fork
-##### Repository Release  ⌛
+##### Repository Release  ☑️
 - /api/repo/release/publish
 - /api/repo/release/update
 - /api/repo/release/delete

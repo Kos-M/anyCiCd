@@ -12,6 +12,16 @@ const branhDeleteExec = process.env.repo_branch_delete || null;
 const tagCreateExec = process.env.repo_tag_create || null;
 const tagDeleteExec = process.env.repo_tag_delete || null;
 
+const forkExec = process.env.repo_fork || null;
+
+const releasePublishExec = process.env.repo_release_publish || null;
+
+const releaseUpdateExec = process.env.repo_release_update || null;
+
+const releaseDeleteExec = process.env.repo_release_delete || null;
+// const releasePublishExec = process.env.repo_fork || null;
+
+
 
 router.post('/push', (req, res, next) => {
   if (!pushExec) {
@@ -152,5 +162,86 @@ router.post('/tag/delete', (req, res, next) => {
     status: 'Completed',
   });
 });
+
+router.post('/repo/fork', (req, res, next) => {
+  if (!forkExec) {
+    return res.status(500).json({
+      status: 'Failed',
+      reason: 'Not defined executable script for this event',
+    });
+  }
+  const execReturnCode = shell.exec(`${forkExec} '${JSON.stringify(req.body)}'`).code;
+  if (execReturnCode !== 0) {
+    return res.status(500).json({
+      status: 'Failed',
+      reason: `Executable exit with status code ${execReturnCode}`,
+    });
+    // shell.exit(1);
+  }
+  return res.json({
+    status: 'Completed',
+  });
+});
+
+router.post('/repo/release/publish', (req, res, next) => {
+  if (!releasePublishExec) {
+    return res.status(500).json({
+      status: 'Failed',
+      reason: 'Not defined executable script for this event',
+    });
+  }
+  const execReturnCode = shell.exec(`${releasePublishExec} '${JSON.stringify(req.body)}'`).code;
+  if (execReturnCode !== 0) {
+    return res.status(500).json({
+      status: 'Failed',
+      reason: `Executable exit with status code ${execReturnCode}`,
+    });
+    // shell.exit(1);
+  }
+  return res.json({
+    status: 'Completed',
+  });
+});
+
+router.post('/repo/release/update', (req, res, next) => {
+  if (!releaseUpdateExec) {
+    return res.status(500).json({
+      status: 'Failed',
+      reason: 'Not defined executable script for this event',
+    });
+  }
+  const execReturnCode = shell.exec(`${releaseUpdateExec} '${JSON.stringify(req.body)}'`).code;
+  if (execReturnCode !== 0) {
+    return res.status(500).json({
+      status: 'Failed',
+      reason: `Executable exit with status code ${execReturnCode}`,
+    });
+    // shell.exit(1);
+  }
+  return res.json({
+    status: 'Completed',
+  });
+});
+
+router.post('/repo/release/delete', (req, res, next) => {
+  if (!releaseDeleteExec) {
+    return res.status(500).json({
+      status: 'Failed',
+      reason: 'Not defined executable script for this event',
+    });
+  }
+  const execReturnCode = shell.exec(`${releaseDeleteExec} '${JSON.stringify(req.body)}'`).code;
+  if (execReturnCode !== 0) {
+    return res.status(500).json({
+      status: 'Failed',
+      reason: `Executable exit with status code ${execReturnCode}`,
+    });
+    // shell.exit(1);
+  }
+  return res.json({
+    status: 'Completed',
+  });
+});
+
 
 module.exports = router;
