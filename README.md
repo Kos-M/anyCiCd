@@ -9,12 +9,12 @@
   GET /api/repo
 ```
 
-##### Repository ⌛
+##### Repository ☑️
 - /api/repo/push
 - /api/repo/create
 - /api/repo/delete
 
-##### Repository Branch/Tag ⌛
+##### Repository Branch/Tag ☑️
 - /api/repo/branch/create
 - /api/repo/branch/delete
 - /api/repo/tag/create
