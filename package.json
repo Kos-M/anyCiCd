@@ -1,22 +1,25 @@
 {
   "name": "anycicd",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": false,
+  "bin": "bin/www",
   "scripts": {
     "start": "node ./bin/www",
     "dev": " nodemon ",
     "clean" : "rm -r -- dist",
-    "build" : "yarn run clean ; pkg bin/www --config package.json "
+    "build" : "./build.sh generic",
+    "build:armv6" : "./build.sh  rpi" 
   },
   "pkg": {
-    "scripts": "bin/*.js",
+    "scripts": "./*.js",
     "assets": [
       "public/**/*",
       "logs/*",
       "exec/*"
     ],
     "targets": [
-      "node16"
+      "node16-x64-linux",
+      "node16-x64-windows"
     ],
     "outputPath": "dist"
 

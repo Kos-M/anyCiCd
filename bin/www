@@ -6,12 +6,10 @@
 const debug = require('debug')('anycicd:server');
 const http = require('http');
 const app = require('../app');
-
+const pack = require('../package.json');
 /**
  * Get port from environment and store in Express.
  */
-
-
 
 /**
  * Create HTTP server.
@@ -76,7 +74,8 @@ function onListening() {
   const bind = typeof addr === 'string'
     ? `pipe ${addr}`
     : `port ${addr.port}`;
-  debug(`Listening on ${bind}`);
+  console.log(`   AnyCiCd v${pack.version}  `);
+  console.log(`> Listening on ${bind}`);
 }
 
 const port = normalizePort(process.env.PORT || '3000');
