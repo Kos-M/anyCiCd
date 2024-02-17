@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
+const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const compression = require('compression');
 const rfs = require('rotating-file-stream');
@@ -38,6 +39,7 @@ const shouldCompress = (req, res) => {
 };
 
 app.use(logger('combined', { stream: accessLogStream }));
+app.use(helmet());
 app.use(limiter);
 
 app.disable('x-powered-by');
