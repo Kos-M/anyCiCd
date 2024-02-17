@@ -3,25 +3,24 @@
 /**
  * Module dependencies.
  */
-const debug = require('debug')('anycicd:server');
-const http = require('http');
-const app = require('../app');
-const pack = require('../package.json');
-/**
- * Get port from environment and store in Express.
- */
+import debug from 'debug';
+import http from 'http';
+import app from '../app';
+import pack from '../package.json';
+import dotenv from 'dotenv';
+dotenv.config();
+
+const logger = debug('anycicd:server');
 
 /**
  * Create HTTP server.
  */
-
 const server = http.createServer(app);
 
 /**
  * Normalize a port into a number, string, or false.
  */
-
-function normalizePort(val) {
+function normalizePort(val: string): number | string | boolean {
   const port = parseInt(val, 10);
 
   if (isNaN(port)) {
@@ -40,8 +39,7 @@ function normalizePort(val) {
 /**
  * Event listener for HTTP server "error" event.
  */
-
-function onError(error) {
+function onError(error: NodeJS.ErrnoException): void {
   if (error.syscall !== 'listen') {
     throw error;
   }
@@ -68,22 +66,21 @@ function onError(error) {
 /**
  * Event listener for HTTP server "listening" event.
  */
-
-function onListening() {
+function onListening(): void {
   const addr = server.address();
   const bind = typeof addr === 'string'
     ? `pipe ${addr}`
-    : `port ${addr.port}`;
+    : `port ${addr?.port}`;
   console.log(`   AnyCiCd v${pack.version}  `);
   console.log(`> Listening on ${bind}`);
 }
 
 const port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
+
 /**
  * Listen on provided port, on all network interfaces.
  */
-
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);

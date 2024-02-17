@@ -1,27 +1,27 @@
-const express = require('express');
-const shell = require('shelljs');
+import express, { Request, Response, NextFunction } from 'express';
+import shell from 'shelljs';
 
 const router = express.Router();
 
-const openExec = process.env.issues_open || null;
-const closeExec = process.env.issues_close || null;
-const reopenExec = process.env.issues_reopen || null;
-const updateExec = process.env.issues_update || null;
+const openExec: string | null = process.env.issues_open || null;
+const closeExec: string | null = process.env.issues_close || null;
+const reopenExec: string | null = process.env.issues_reopen || null;
+const updateExec: string | null = process.env.issues_update || null;
 
-const labelClearExec = process.env.issues_label_clear || null;
-const labelUpdateExec = process.env.issues_label_update || null;
+const labelClearExec: string | null = process.env.issues_label_clear || null;
+const labelUpdateExec: string | null = process.env.issues_label_update || null;
 
-const commentCreateExec = process.env.issues_comment_create || null;
-const commentUpdateExec = process.env.issues_comment_update || null;
-const commentDeleteExec = process.env.issues_comment_delete || null;
+const commentCreateExec: string | null = process.env.issues_comment_create || null;
+const commentUpdateExec: string | null = process.env.issues_comment_update || null;
+const commentDeleteExec: string | null = process.env.issues_comment_delete || null;
 
-const assignExec = process.env.issues_assign || null;
-const unassignExec = process.env.issues_unassign || null;
+const assignExec: string | null = process.env.issues_assign || null;
+const unassignExec: string | null = process.env.issues_unassign || null;
 
-const milistoneExec = process.env.issues_milistone || null;
-const demilistoneExec = process.env.issues_demilistone || null;
+const milestoneExec: string | null = process.env.issues_milestone || null;
+const demilestoneExec: string | null = process.env.issues_demilestone || null;
 
-router.post('/open', (req, res, next) => {
+router.post('/open', (req: Request, res: Response, next: NextFunction) => {
   if (!openExec) {
     return res.status(500).json({
       status: 'Failed',
@@ -29,7 +29,7 @@ router.post('/open', (req, res, next) => {
     });
   }
   if (req.body.action !== 'opened') return res.end();
-  const execReturnCode = shell.exec(`${openExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = shell.exec(`${openExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -41,7 +41,7 @@ router.post('/open', (req, res, next) => {
   });
 });
 
-router.post('/close', (req, res, next) => {
+router.post('/close', (req: Request, res: Response, next: NextFunction) => {
   if (!closeExec) {
     return res.status(500).json({
       status: 'Failed',
@@ -49,7 +49,7 @@ router.post('/close', (req, res, next) => {
     });
   }
   if (req.body.action !== 'closed') return res.end();
-  const execReturnCode = shell.exec(`${closeExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = shell.exec(`${closeExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -61,7 +61,7 @@ router.post('/close', (req, res, next) => {
   });
 });
 
-router.post('/reopen', (req, res, next) => {
+router.post('/reopen', (req: Request, res: Response, next: NextFunction) => {
   if (!reopenExec) {
     return res.status(500).json({
       status: 'Failed',
@@ -69,7 +69,7 @@ router.post('/reopen', (req, res, next) => {
     });
   }
   if (req.body.action !== 'reopened') return res.end();
-  const execReturnCode = shell.exec(`${reopenExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = shell.exec(`${reopenExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -81,7 +81,7 @@ router.post('/reopen', (req, res, next) => {
   });
 });
 
-router.post('/update', (req, res, next) => {
+router.post('/update', (req: Request, res: Response, next: NextFunction) => {
   if (!updateExec) {
     return res.status(500).json({
       status: 'Failed',
@@ -89,7 +89,7 @@ router.post('/update', (req, res, next) => {
     });
   }
   if (req.body.action !== 'edited') return res.end();
-  const execReturnCode = shell.exec(`${updateExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = shell.exec(`${updateExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -101,7 +101,7 @@ router.post('/update', (req, res, next) => {
   });
 });
 
-router.post('/label/clear', (req, res, next) => {
+router.post('/label/clear', (req: Request, res: Response, next: NextFunction) => {
   if (!labelClearExec) {
     return res.status(500).json({
       status: 'Failed',
@@ -109,7 +109,7 @@ router.post('/label/clear', (req, res, next) => {
     });
   }
   if (req.body.action !== 'label_cleared') return res.end();
-  const execReturnCode = shell.exec(`${labelClearExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = shell.exec(`${labelClearExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -121,7 +121,7 @@ router.post('/label/clear', (req, res, next) => {
   });
 });
 
-router.post('/label/update', (req, res, next) => {
+router.post('/label/update', (req: Request, res: Response, next: NextFunction) => {
   if (!labelUpdateExec) {
     return res.status(500).json({
       status: 'Failed',
@@ -129,7 +129,7 @@ router.post('/label/update', (req, res, next) => {
     });
   }
   if (req.body.action !== 'label_updated') return res.end();
-  const execReturnCode = shell.exec(`${labelUpdateExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = shell.exec(`${labelUpdateExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -141,7 +141,7 @@ router.post('/label/update', (req, res, next) => {
   });
 });
 
-router.post('/comment/create', (req, res, next) => {
+router.post('/comment/create', (req: Request, res: Response, next: NextFunction) => {
   if (!commentCreateExec) {
     return res.status(500).json({
       status: 'Failed',
@@ -149,7 +149,7 @@ router.post('/comment/create', (req, res, next) => {
     });
   }
   if (req.body.action !== 'created') return res.end();
-  const execReturnCode = shell.exec(`${commentCreateExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = shell.exec(`${commentCreateExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -161,7 +161,7 @@ router.post('/comment/create', (req, res, next) => {
   });
 });
 
-router.post('/comment/update', (req, res, next) => {
+router.post('/comment/update', (req: Request, res: Response, next: NextFunction) => {
   if (!commentUpdateExec) {
     return res.status(500).json({
       status: 'Failed',
@@ -169,7 +169,7 @@ router.post('/comment/update', (req, res, next) => {
     });
   }
   if (req.body.action !== 'edited') return res.end();
-  const execReturnCode = shell.exec(`${commentUpdateExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = shell.exec(`${commentUpdateExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -181,7 +181,7 @@ router.post('/comment/update', (req, res, next) => {
   });
 });
 
-router.post('/comment/delete', (req, res, next) => {
+router.post('/comment/delete', (req: Request, res: Response, next: NextFunction) => {
   if (!commentDeleteExec) {
     return res.status(500).json({
       status: 'Failed',
@@ -189,7 +189,7 @@ router.post('/comment/delete', (req, res, next) => {
     });
   }
   if (req.body.action !== 'deleted') return res.end();
-  const execReturnCode = shell.exec(`${commentDeleteExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = shell.exec(`${commentDeleteExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -201,7 +201,7 @@ router.post('/comment/delete', (req, res, next) => {
   });
 });
 
-router.post('/assign', (req, res, next) => {
+router.post('/assign', (req: Request, res: Response, next: NextFunction) => {
   if (!assignExec) {
     return res.status(500).json({
       status: 'Failed',
@@ -209,7 +209,7 @@ router.post('/assign', (req, res, next) => {
     });
   }
   if (req.body.action !== 'assigned') return res.end();
-  const execReturnCode = shell.exec(`${assignExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = shell.exec(`${assignExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -221,7 +221,7 @@ router.post('/assign', (req, res, next) => {
   });
 });
 
-router.post('/unassign', (req, res, next) => {
+router.post('/unassign', (req: Request, res: Response, next: NextFunction) => {
   if (!unassignExec) {
     return res.status(500).json({
       status: 'Failed',
@@ -229,7 +229,7 @@ router.post('/unassign', (req, res, next) => {
     });
   }
   if (req.body.action !== 'unassigned') return res.end();
-  const execReturnCode = shell.exec(`${unassignExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = shell.exec(`${unassignExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -241,15 +241,15 @@ router.post('/unassign', (req, res, next) => {
   });
 });
 
-router.post('/milistone', (req, res, next) => {
-  if (!milistoneExec) {
+router.post('/milestone', (req: Request, res: Response, next: NextFunction) => {
+  if (!milestoneExec) {
     return res.status(500).json({
       status: 'Failed',
       reason: 'Not defined executable script for this event',
     });
   }
   if (req.body.action !== 'milestoned') return res.end();
-  const execReturnCode = shell.exec(`${milistoneExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = shell.exec(`${milestoneExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -261,15 +261,15 @@ router.post('/milistone', (req, res, next) => {
   });
 });
 
-router.post('/demilistone', (req, res, next) => {
-  if (!demilistoneExec) {
+router.post('/demilestone', (req: Request, res: Response, next: NextFunction) => {
+  if (!demilestoneExec) {
     return res.status(500).json({
       status: 'Failed',
       reason: 'Not defined executable script for this event',
     });
   }
   if (req.body.action !== 'demilestoned') return res.end();
-  const execReturnCode = shell.exec(`${demilistoneExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = shell.exec(`${demilestoneExec} '${JSON.stringify(req.body)}'`).code;
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -281,4 +281,4 @@ router.post('/demilistone', (req, res, next) => {
   });
 });
 
-module.exports = router;
+export default router;
