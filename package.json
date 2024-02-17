@@ -2,27 +2,26 @@
   "name": "anycicd",
   "version": "2.0.0",
   "private": false,
-  "bin": "bin/www",
+  "bin": "bin/www.ts",
   "scripts": {
-    "start": "node ./bin/www",
+    "start": "node ./bin/www.ts",
     "dev": " nodemon ",
-    "clean": "rm -r -- dist",
+    "clean": "rm -r -- dist built",
     "compile": "tsc",
-    "build": "./build.sh generic",
+    "build": "yarn run compile;yarn run build:generic",
+    "build:generic": "./build.sh  generic",
     "build:armv6": "./build.sh  rpi"
   },
   "pkg": {
     "scripts": "./*.js",
     "assets": [
-      "public/**/*",
       "logs/*",
       "exec/*"
     ],
     "targets": [
-      "node16-x64-linux",
-      "node16-x64-windows"
-    ],
-    "outputPath": "dist"
+      "latest-x64-linux",
+      "latest-x64-windows"
+    ]
   },
   "dependencies": {
     "body-parser": "^1.20.2",

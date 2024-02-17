@@ -1,15 +1,13 @@
 {
-  "bin": "bin/www",
   "pkg": {
     "scripts": "./*.js",
     "assets": [
-      "public/**/*",
       "logs/*",
       "exec/*"
     ],
     "targets": [
-      "node16-linux-arm64"
+      "latest-linux-arm64"
     ],
-    "outputPath": "dist"
+    "outputPath": "built"
   }
 }
