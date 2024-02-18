@@ -1,27 +1,27 @@
 {
   "name": "anycicd",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "private": false,
-  "bin": "bin/www",
+  "bin": "bin/www.ts",
   "scripts": {
-    "start": "node ./bin/www",
+    "start": "node ./bin/www.ts",
     "dev": " nodemon ",
-    "clean": "rm -r -- dist",
-    "build": "./build.sh generic",
+    "clean": "rm -r -- dist built",
+    "compile": "tsc",
+    "build": "yarn run compile;yarn run build:generic",
+    "build:generic": "./build.sh  generic",
     "build:armv6": "./build.sh  rpi"
   },
   "pkg": {
     "scripts": "./*.js",
     "assets": [
-      "public/**/*",
       "logs/*",
       "exec/*"
     ],
     "targets": [
-      "node16-x64-linux",
-      "node16-x64-windows"
-    ],
-    "outputPath": "dist"
+      "latest-x64-linux",
+      "latest-x64-windows"
+    ]
   },
   "dependencies": {
     "body-parser": "^1.20.2",
@@ -37,10 +37,18 @@
     "shelljs": "^0.8.5"
   },
   "devDependencies": {
+    "@types/compression": "^1.7.5",
+    "@types/cookie-parser": "^1.4.6",
+    "@types/debug": "^4.1.12",
+    "@types/express": "^4.17.21",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^20.11.19",
+    "@types/shelljs": "^0.8.15",
     "eslint": "^8.56.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.29.1",
     "nodemon": "^3.0.3",
-    "pkg": "^5.8.1"
+    "pkg": "^5.8.1",
+    "typescript": "^5.3.3"
   }
 }

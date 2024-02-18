@@ -1,18 +1,23 @@
 #!/bin/bash
 
-if [ -d "dist" ] ; then 
-    rm -r -- dist
+if [ -d "built" ] ; then 
+    rm -r -- built
 fi
  
 PACKAGE_VERSION=$(  awk -F'"' '/"version": ".+"/{ print $4; exit; }' package.json)
 echo "Building anyCiCd-$PACKAGE_VERSION"
 
 function pack(){
-    cd dist
+    if [ ! -d "built" ] ; then 
+        echo "build dir not found , abort packing.."
+        return
+    fi
+    cd built
     for file in * ; do
         mkdir "dir_$file"
         mv "$file" "dir_$file/"
         cp ../sample.env  "dir_$file"
+        mkdir "dir_$file/exec"
         mv  "dir_$file"  "$file"
         zip -9 -r "$file.zip" "$file"
         echo $file  
@@ -20,11 +25,11 @@ function pack(){
 }
  
 function generic(){
-    npx pkg --config package.json  -o "./dist/anyCiCd-$PACKAGE_VERSION" ./bin/www
+    npx pkg --config dist/package.json  -o "./built/anyCiCd-generic-$PACKAGE_VERSION" ./dist/bin/www.js
     pack
 }
 function rpi(){
-    npx pkg --config rpi_build_conf.json -o "./dist/anyCiCd-$PACKAGE_VERSION" ./bin/www
+    npx pkg --config rpi_build_conf.json -o "./built/anyCiCd-rpi-$PACKAGE_VERSION"  ./dist/bin/www.js
     pack
 }
 

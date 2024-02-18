@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+      "outDir": "dist",
+      "target": "es6",
+      "module": "commonjs",
+      "moduleResolution": "node" ,
+      "sourceMap": false,
+      "removeComments": false,
+      "esModuleInterop": true ,
+      "strict": true,
+      "forceConsistentCasingInFileNames": true,
+      "resolveJsonModule":true,
+      "skipLibCheck": true /* Skip type checking all .d.ts files. */
+    },
+    "include": [
+        "./app.ts",
+        "bin/*.ts",
+        "exec/**/*.sh",
+        "routes/**/*.ts" // Adjust the path to match your file structure
+      ],
+    "exclude": ["node_modules"]
+  }
+  
