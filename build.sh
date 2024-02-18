@@ -1,4 +1,5 @@
 #!/bin/bash
+set -Eeuo pipefail
 
 if [ -d "built" ] ; then 
     rm -r -- built
