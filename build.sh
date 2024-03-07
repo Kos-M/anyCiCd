@@ -6,7 +6,11 @@ if [ -d "built" ] ; then
 fi
  
 PACKAGE_VERSION=$(  awk -F'"' '/"version": ".+"/{ print $4; exit; }' package.json)
-echo "Building anyCiCd-$PACKAGE_VERSION"
+ function getHash(){
+    git rev-parse --short HEAD
+ }
+
+echo "Building anyCiCd-$PACKAGE_VERSION #$(getHash)"
 
 function pack(){
     if [ ! -d "built" ] ; then 
@@ -26,11 +30,11 @@ function pack(){
 }
  
 function generic(){
-    npx pkg --config dist/package.json  -o "./built/anyCiCd-generic-$PACKAGE_VERSION" ./dist/bin/www.js
+    npx pkg --config dist/package.json  -o "./built/anyCiCd-$PACKAGE_VERSION-$(getHash)-generic" ./dist/bin/www.js
     pack
 }
 function rpi(){
-    npx pkg --config rpi_build_conf.json -o "./built/anyCiCd-rpi-$PACKAGE_VERSION"  ./dist/bin/www.js
+    npx pkg --config rpi_build_conf.json -o "./built/anyCiCd-$PACKAGE_VERSION-$(getHash)-rpi"  ./dist/bin/www.js
     pack
 }
 
