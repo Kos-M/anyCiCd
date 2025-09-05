@@ -69,82 +69,84 @@
 
 ## API Reference
 
+All API endpoints expect `POST` requests with a JSON payload and require signature verification using the `X-Hub-Signature` header.
+
 #### Repository Events
 
 ```http
-  GET /api/repo
+  POST /api/repo
 ```
 
 ##### Repository ☑️
-- /api/repo/push
-- /api/repo/create
-- /api/repo/delete
+- `/api/repo/push`
+- `/api/repo/create`
+- `/api/repo/delete`
 
 ##### Repository Branch/Tag ☑️
-- /api/repo/branch/create
-- /api/repo/branch/delete
-- /api/repo/tag/create
-- /api/repo/tag/delete
+- `/api/repo/branch/create`
+- `/api/repo/branch/delete`
+- `/api/repo/tag/create`
+- `/api/repo/tag/delete`
 
 ##### Repository Fork  ☑️
-- /api/repo/fork
+- `/api/repo/fork`
 ##### Repository Release  ☑️
-- /api/repo/release/publish
-- /api/repo/release/update
-- /api/repo/release/delete
+- `/api/repo/release/publish`
+- `/api/repo/release/update`
+- `/api/repo/release/delete`
 
 #### Issue Events
 
 ```http
-  GET /api/issues
+  POST /api/issues
 ```
 ##### Issues  ☑️
-- /api/issues/open
-- /api/issues/close
-- /api/issues/reopen
-- /api/issues/update
+- `/api/issues/open`
+- `/api/issues/close`
+- `/api/issues/reopen`
+- `/api/issues/update`
 ##### Issue Labeled ☑️
-- /api/issues/label/clear
-- /api/issues/label/update
+- `/api/issues/label/clear`
+- `/api/issues/label/update`
 ##### Issue Comment ☑️
-- /api/issues/comment/create
-- /api/issues/comment/update
-- /api/issues/comment/delete
+- `/api/issues/comment/create`
+- `/api/issues/comment/update`
+- `/api/issues/comment/delete`
 ##### Issue Assigned ☑️
-- /api/issues/assign
-- /api/issues/unassign
+- `/api/issues/assign`
+- `/api/issues/unassign`
 ##### Issue Milistoned ☑️
-- /api/issues/milistone
-- /api/issues/demilistone
+- `/api/issues/milistone`
+- `/api/issues/demilistone`
 
 
 ```http
-  GET /api/pull
+  POST /api/pull
 ```
 ##### Pull Request ⌛
-- /api/pull/open
-- /api/pull/close
-- /api/pull/reopen
-- /api/pull/update
+- `/api/pull/open`
+- `/api/pull/close`
+- `/api/pull/reopen`
+- `/api/pull/update`
 ##### Pull Request Labeled ⌛
-- /api/pull/label/update
-- /api/pull/label/clear
+- `/api/pull/label/update`
+- `/api/pull/label/clear`
 ##### Pull Request Comment ⌛
-- /api/pull/comment/create
-- /api/pull/comment/delete
-- /api/pull/comment/update
+- `/api/pull/comment/create`
+- `/api/pull/comment/delete`
+- `/api/pull/comment/update`
 ##### Pull Request Synchronized ⌛
-- /api/pull/synced
+- `/api/pull/synced`
 ##### Pull Request Assigned ⌛
-- /api/pull/assign
-- /api/pull/unassign
+- `/api/pull/assign`
+- `/api/pull/unassign`
 ##### Pull Request Milistoned ⌛
-- /api/pull/milistone
-- /api/pull/demilistone
+- `/api/pull/milistone`
+- `/api/pull/demilistone`
 ##### Pull Request Reviewed ⌛
-- /api/pull/request/approve
-- /api/pull/request/reject
-- /api/pull/request/comment
+- `/api/pull/request/approve`
+- `/api/pull/request/reject`
+- `/api/pull/request/comment`
 
 
 
