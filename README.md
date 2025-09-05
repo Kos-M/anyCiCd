@@ -69,6 +69,14 @@
    # ... and so on for other issue events
    ```
 
+   **Pull Request Event Script Configuration:**
+   Currently, there is a single endpoint for all pull request events. You can define an environment variable to execute a script for any pull request webhook. The `action` field in the webhook payload will indicate the specific pull request event.
+
+   Example:
+   ```
+   pull_request_event=./exec/on_pull_request.sh
+   ```
+
 4. **Build the TypeScript files:**
 
    ```bash
@@ -244,37 +252,20 @@ These endpoints handle various issue-related events. The `X-GitHub-Event` header
   - **Environment Variable:** `issues_demilestone`
   - **Payload:** [GitHub Issues Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#issues)
 
+#### Pull Request Events
+
+These endpoints handle various pull request-related events. The `X-GitHub-Event` header should be `pull_request` (or `pull_request_review`, `pull_request_review_comment`), and the `action` field in the JSON payload determines the specific event. Currently, all pull request events are routed through a single endpoint.
 
 ```http
   POST /api/pull
 ```
-##### Pull Request ⌛
-- `/api/pull/open`
-- `/api/pull/close`
-- `/api/pull/reopen`
-- `/api/pull/update`
-##### Pull Request Labeled ⌛
-- `/api/pull/label/update`
-- `/api/pull/label/clear`
-##### Pull Request Comment ⌛
-- `/api/pull/comment/create`
-- `/api/pull/comment/delete`
-- `/api/pull/comment/update`
-##### Pull Request Synchronized ⌛
-- `/api/pull/synced`
-##### Pull Request Assigned ⌛
-- `/api/pull/assign`
-- `/api/pull/unassign`
-##### Pull Request Milistoned ⌛
-- `/api/pull/milistone`
-- `/api/pull/demilistone`
-##### Pull Request Reviewed ⌛
-- `/api/pull/request/approve`
-- `/api/pull/request/reject`
-- `/api/pull/request/comment`
 
+##### Endpoints:
 
-
+- `/api/pull`
+  - **Description:** Handles all pull request related events (e.g., open, close, review, comment).
+  - **Environment Variable:** `pull_request_event`
+  - **Payload:** [GitHub Pull Request Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request), [GitHub Pull Request Review Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request_review), [GitHub Pull Request Review Comment Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request_review_comment)
 
 
 ## Development Status
