@@ -1,6 +1,72 @@
+# anyCiCd
 
-# 
-    
+`anyCiCd` is a lightweight and flexible CI/CD webhook handler designed to integrate with various Git platforms (e.g., GitHub, GitLab, Bitbucket) and trigger custom scripts based on repository events. It allows you to automate tasks like deployments, testing, and notifications by executing shell scripts in response to specific webhook payloads.
+
+## Features
+
+- **Webhook Listener:** Listens for incoming webhook events from Git platforms.
+- **Event-driven Script Execution:** Triggers predefined shell scripts based on the type of repository event (e.g., push, pull request, issue). 
+- **Signature Verification:** (To be implemented/verified) Ensures the authenticity of incoming webhooks.
+- **Customizable Actions:** Easily configure which scripts to run for different events.
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (LTS version recommended)
+- npm or Yarn
+
+### Installation
+
+1. **Clone the repository:**
+
+   ```bash
+   git clone https://github.com/Kos-M/anyCiCd.git
+   cd anyCiCd
+   ```
+
+2. **Install dependencies:**
+
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+
+3. **Configure Environment Variables:**
+
+   Create a `.env` file in the root directory by copying `sample.env` and fill in the necessary values.
+
+   ```bash
+   cp sample.env .env
+   ```
+
+   Edit `.env`:
+
+   ```
+   PORT=3000
+   GITHUB_WEBHOOK_SECRET=your_github_webhook_secret
+   # Add other secrets/configurations as needed
+   ```
+
+4. **Build the TypeScript files:**
+
+   ```bash
+   npm run build
+   # or
+   yarn build
+   ```
+
+5. **Run the application:**
+
+   ```bash
+   npm start
+   # or
+   yarn start
+   ```
+
+   The server will start on the configured `PORT` (default: 3000).
+
 ## API Reference
 
 #### Repository Events
