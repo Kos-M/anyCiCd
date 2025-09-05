@@ -59,6 +59,16 @@
    # ... and so on for other repository events
    ```
 
+   **Issue Event Script Configuration:**
+   Similar to repository events, you can define environment variables for issue events. The `action` field in the webhook payload determines which script is executed.
+
+   Example:
+   ```
+   issues_open=./exec/on_issue_open.sh
+   issues_comment_create=./exec/on_issue_comment_create.sh
+   # ... and so on for other issue events
+   ```
+
 4. **Build the TypeScript files:**
 
    ```bash
@@ -148,27 +158,91 @@ These endpoints handle various repository-related events. The full webhook paylo
 
 #### Issue Events
 
+These endpoints handle various issue-related events. The `X-GitHub-Event` header should be `issues`, and the `action` field in the JSON payload determines the specific event.
+
 ```http
-  POST /api/issues
+  POST /api/issues/{event_type}
 ```
-##### Issues  ☑️
+
+##### Endpoints:
+
 - `/api/issues/open`
+  - **Description:** Triggered when an issue is opened.
+  - **Expected `action`:** `opened`
+  - **Environment Variable:** `issues_open`
+  - **Payload:** [GitHub Issues Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#issues)
+
 - `/api/issues/close`
+  - **Description:** Triggered when an issue is closed.
+  - **Expected `action`:** `closed`
+  - **Environment Variable:** `issues_close`
+  - **Payload:** [GitHub Issues Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#issues)
+
 - `/api/issues/reopen`
+  - **Description:** Triggered when an issue is reopened.
+  - **Expected `action`:** `reopened`
+  - **Environment Variable:** `issues_reopen`
+  - **Payload:** [GitHub Issues Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#issues)
+
 - `/api/issues/update`
-##### Issue Labeled ☑️
+  - **Description:** Triggered when an issue is edited.
+  - **Expected `action`:** `edited`
+  - **Environment Variable:** `issues_update`
+  - **Payload:** [GitHub Issues Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#issues)
+
 - `/api/issues/label/clear`
+  - **Description:** Triggered when all labels are removed from an issue.
+  - **Expected `action`:** `unlabeled` (when all labels are removed)
+  - **Environment Variable:** `issues_label_clear`
+  - **Payload:** [GitHub Issues Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#issues)
+
 - `/api/issues/label/update`
-##### Issue Comment ☑️
+  - **Description:** Triggered when a label is added or removed from an issue.
+  - **Expected `action`:** `labeled` or `unlabeled` (when a single label is added/removed)
+  - **Environment Variable:** `issues_label_update`
+  - **Payload:** [GitHub Issues Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#issues)
+
 - `/api/issues/comment/create`
+  - **Description:** Triggered when a comment is created on an issue.
+  - **Expected `action`:** `created` (within the `comment` object of the payload)
+  - **Environment Variable:** `issues_comment_create`
+  - **Payload:** [GitHub Issue Comment Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#issue_comment)
+
 - `/api/issues/comment/update`
+  - **Description:** Triggered when a comment on an issue is edited.
+  - **Expected `action`:** `edited` (within the `comment` object of the payload)
+  - **Environment Variable:** `issues_comment_update`
+  - **Payload:** [GitHub Issue Comment Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#issue_comment)
+
 - `/api/issues/comment/delete`
-##### Issue Assigned ☑️
+  - **Description:** Triggered when a comment on an issue is deleted.
+  - **Expected `action`:** `deleted` (within the `comment` object of the payload)
+  - **Environment Variable:** `issues_comment_delete`
+  - **Payload:** [GitHub Issue Comment Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#issue_comment)
+
 - `/api/issues/assign`
+  - **Description:** Triggered when an issue is assigned.
+  - **Expected `action`:** `assigned`
+  - **Environment Variable:** `issues_assign`
+  - **Payload:** [GitHub Issues Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#issues)
+
 - `/api/issues/unassign`
-##### Issue Milistoned ☑️
-- `/api/issues/milistone`
-- `/api/issues/demilistone`
+  - **Description:** Triggered when an issue is unassigned.
+  - **Expected `action`:** `unassigned`
+  - **Environment Variable:** `issues_unassign`
+  - **Payload:** [GitHub Issues Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#issues)
+
+- `/api/issues/milestone`
+  - **Description:** Triggered when an issue is added to a milestone.
+  - **Expected `action`:** `milestoned`
+  - **Environment Variable:** `issues_milestone`
+  - **Payload:** [GitHub Issues Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#issues)
+
+- `/api/issues/demilestone`
+  - **Description:** Triggered when an issue is removed from a milestone.
+  - **Expected `action`:** `demilestoned`
+  - **Environment Variable:** `issues_demilestone`
+  - **Payload:** [GitHub Issues Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#issues)
 
 
 ```http
