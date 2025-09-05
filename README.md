@@ -49,6 +49,16 @@
    # Add other secrets/configurations as needed
    ```
 
+   **Repository Event Script Configuration:**
+   For each repository event, you can define an environment variable pointing to a shell script that will be executed when the corresponding webhook is received. The full JSON payload of the webhook will be passed as the first argument to your script.
+
+   Example:
+   ```
+   repo_push=./exec/on_repo_push.sh
+   repo_create=./exec/on_repo_create.sh
+   # ... and so on for other repository events
+   ```
+
 4. **Build the TypeScript files:**
 
    ```bash
@@ -69,31 +79,72 @@
 
 ## API Reference
 
-All API endpoints expect `POST` requests with a JSON payload and require signature verification using the `X-Hub-Signature` header.
+All API endpoints expect `POST` requests with a JSON payload and require signature verification using the `X-Hub-Signature` header. The `X-GitHub-Event` header (or equivalent for other Git platforms) is used to identify the event type.
 
 #### Repository Events
 
+These endpoints handle various repository-related events. The full webhook payload is passed as an argument to the configured script.
+
 ```http
-  POST /api/repo
+  POST /api/repo/{event_type}
 ```
 
-##### Repository ☑️
+##### Endpoints:
+
 - `/api/repo/push`
+  - **Description:** Triggered when a push is made to the repository.
+  - **Environment Variable:** `repo_push`
+  - **Payload:** [GitHub Push Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#push)
+
 - `/api/repo/create`
+  - **Description:** Triggered when a repository, branch, or tag is created.
+  - **Environment Variable:** `repo_create`
+  - **Payload:** [GitHub Create Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#create)
+
 - `/api/repo/delete`
+  - **Description:** Triggered when a repository, branch, or tag is deleted.
+  - **Environment Variable:** `repo_delete`
+  - **Payload:** [GitHub Delete Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#delete)
 
-##### Repository Branch/Tag ☑️
 - `/api/repo/branch/create`
-- `/api/repo/branch/delete`
-- `/api/repo/tag/create`
-- `/api/repo/tag/delete`
+  - **Description:** Triggered when a branch is created.
+  - **Environment Variable:** `repo_branch_create`
+  - **Payload:** Similar to GitHub Create Event, but specifically for branches.
 
-##### Repository Fork  ☑️
+- `/api/repo/branch/delete`
+  - **Description:** Triggered when a branch is deleted.
+  - **Environment Variable:** `repo_branch_delete`
+  - **Payload:** Similar to GitHub Delete Event, but specifically for branches.
+
+- `/api/repo/tag/create`
+  - **Description:** Triggered when a tag is created.
+  - **Environment Variable:** `repo_tag_create`
+  - **Payload:** Similar to GitHub Create Event, but specifically for tags.
+
+- `/api/repo/tag/delete`
+  - **Description:** Triggered when a tag is deleted.
+  - **Environment Variable:** `repo_tag_delete`
+  - **Payload:** Similar to GitHub Delete Event, but specifically for tags.
+
 - `/api/repo/fork`
-##### Repository Release  ☑️
+  - **Description:** Triggered when a repository is forked.
+  - **Environment Variable:** `repo_fork`
+  - **Payload:** [GitHub Fork Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#fork)
+
 - `/api/repo/release/publish`
+  - **Description:** Triggered when a release is published.
+  - **Environment Variable:** `repo_release_publish`
+  - **Payload:** [GitHub Release Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#release)
+
 - `/api/repo/release/update`
+  - **Description:** Triggered when a release is updated.
+  - **Environment Variable:** `repo_release_update`
+  - **Payload:** [GitHub Release Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#release)
+
 - `/api/repo/release/delete`
+  - **Description:** Triggered when a release is deleted.
+  - **Environment Variable:** `repo_release_delete`
+  - **Payload:** [GitHub Release Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#release)
 
 #### Issue Events
 
@@ -153,8 +204,8 @@ All API endpoints expect `POST` requests with a JSON payload and require signatu
 
 
 ## Development Status
-- ⌛ Pending
-- ☑️ Done
+- ⌛ Pending: Feature is planned or under development.
+- ☑️ Done: Feature is implemented and tested.
 
 
 
