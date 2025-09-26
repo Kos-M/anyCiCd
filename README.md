@@ -267,34 +267,41 @@ These endpoints handle various pull request-related events. The `X-GitHub-Event`
   - **Environment Variable:** `pull_request_event`
   - **Payload:** [GitHub Pull Request Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request), [GitHub Pull Request Review Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request_review), [GitHub Pull Request Review Comment Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request_review_comment)
 
+## Code Overview
+
+This section provides a brief overview of key internal files and functions for developers looking to contribute or understand the codebase more deeply.
+
+### `app.ts`
+- `rawBodySaver(req: Request, res: Response, buf: Buffer, encoding: BufferEncoding)`: A middleware function used to save the raw body of incoming requests. This is crucial for signature verification, as the signature is calculated based on the raw payload.
+
+### `bin/www.ts`
+- `normalizePort(val: string): number | string | boolean`: Parses a port value into a number, string, or boolean.
+- `onError(error: NodeJS.ErrnoException): void`: Event listener for HTTP server "error" event. Provides user-friendly error messages.
+- `onListening(): void`: Event listener for HTTP server "listening" event. Logs that the server is running and on which port.
+
+### `routes/signatureVerify.ts`
+- `VerifySignature(req: Request, res: Response, next: NextFunction): void`: Middleware function to verify the `X-Hub-Signature` header of incoming webhooks. This ensures that the webhook payload genuinely originated from the configured Git platform and has not been tampered with.
 
 ## Development Status
 - ⌛ Pending: Feature is planned or under development.
 - ☑️ Done: Feature is implemented and tested.
 
+## Contributing
 
+Contributions are always welcome! To contribute, please follow these steps:
 
-
-
-
-
-
-
+1.  **Fork the repository.**
+2.  **Create a new branch** for your feature or bug fix (e.g., `feature/my-new-feature` or `bugfix/fix-issue-123`).
+3.  **Make your changes**, ensuring they adhere to the existing coding style and conventions.
+4.  **Write clear and concise commit messages.**
+5.  **Test your changes thoroughly.**
+6.  **Update documentation** as necessary to reflect your changes.
+7.  **Open a pull request** to the `master` branch, providing a detailed description of your changes.
 
 ## Authors
 
 - [@Kos-M](https://www.github.com/Kos-M)
 
-
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
-
-
-## Contributing
-
-Contributions are always welcome!
-
-
-
-
