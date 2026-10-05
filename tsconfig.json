@@ -16,7 +16,8 @@
         "./app.ts",
         "bin/*.ts",
         "exec/**/*.sh",
-        "routes/**/*.ts" // Adjust the path to match your file structure
+        "routes/**/*.ts", // Adjust the path to match your file structure
+        "test/**/*.ts"
       ],
     "exclude": ["node_modules"]
   }

@@ -1,5 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
-import shell from 'shelljs';
+import { runHook } from './execHook';
 
 const router = express.Router();
 
@@ -29,7 +29,7 @@ router.post('/open', (req: Request, res: Response, next: NextFunction) => {
     });
   }
   if (req.body.action !== 'opened') return res.end();
-  const execReturnCode: number = shell.exec(`${openExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = runHook(openExec, req.body);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -49,7 +49,7 @@ router.post('/close', (req: Request, res: Response, next: NextFunction) => {
     });
   }
   if (req.body.action !== 'closed') return res.end();
-  const execReturnCode: number = shell.exec(`${closeExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = runHook(closeExec, req.body);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -69,7 +69,7 @@ router.post('/reopen', (req: Request, res: Response, next: NextFunction) => {
     });
   }
   if (req.body.action !== 'reopened') return res.end();
-  const execReturnCode: number = shell.exec(`${reopenExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = runHook(reopenExec, req.body);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -89,7 +89,7 @@ router.post('/update', (req: Request, res: Response, next: NextFunction) => {
     });
   }
   if (req.body.action !== 'edited') return res.end();
-  const execReturnCode: number = shell.exec(`${updateExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = runHook(updateExec, req.body);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -109,7 +109,7 @@ router.post('/label/clear', (req: Request, res: Response, next: NextFunction) =>
     });
   }
   if (req.body.action !== 'label_cleared') return res.end();
-  const execReturnCode: number = shell.exec(`${labelClearExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = runHook(labelClearExec, req.body);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -129,7 +129,7 @@ router.post('/label/update', (req: Request, res: Response, next: NextFunction) =
     });
   }
   if (req.body.action !== 'label_updated') return res.end();
-  const execReturnCode: number = shell.exec(`${labelUpdateExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = runHook(labelUpdateExec, req.body);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -149,7 +149,7 @@ router.post('/comment/create', (req: Request, res: Response, next: NextFunction)
     });
   }
   if (req.body.action !== 'created') return res.end();
-  const execReturnCode: number = shell.exec(`${commentCreateExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = runHook(commentCreateExec, req.body);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -169,7 +169,7 @@ router.post('/comment/update', (req: Request, res: Response, next: NextFunction)
     });
   }
   if (req.body.action !== 'edited') return res.end();
-  const execReturnCode: number = shell.exec(`${commentUpdateExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = runHook(commentUpdateExec, req.body);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -189,7 +189,7 @@ router.post('/comment/delete', (req: Request, res: Response, next: NextFunction)
     });
   }
   if (req.body.action !== 'deleted') return res.end();
-  const execReturnCode: number = shell.exec(`${commentDeleteExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = runHook(commentDeleteExec, req.body);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -209,7 +209,7 @@ router.post('/assign', (req: Request, res: Response, next: NextFunction) => {
     });
   }
   if (req.body.action !== 'assigned') return res.end();
-  const execReturnCode: number = shell.exec(`${assignExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = runHook(assignExec, req.body);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -229,7 +229,7 @@ router.post('/unassign', (req: Request, res: Response, next: NextFunction) => {
     });
   }
   if (req.body.action !== 'unassigned') return res.end();
-  const execReturnCode: number = shell.exec(`${unassignExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = runHook(unassignExec, req.body);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -249,7 +249,7 @@ router.post('/milestone', (req: Request, res: Response, next: NextFunction) => {
     });
   }
   if (req.body.action !== 'milestoned') return res.end();
-  const execReturnCode: number = shell.exec(`${milestoneExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = runHook(milestoneExec, req.body);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -269,7 +269,7 @@ router.post('/demilestone', (req: Request, res: Response, next: NextFunction) =>
     });
   }
   if (req.body.action !== 'demilestoned') return res.end();
-  const execReturnCode: number = shell.exec(`${demilestoneExec} '${JSON.stringify(req.body)}'`).code;
+  const execReturnCode: number = runHook(demilestoneExec, req.body);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
