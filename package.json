@@ -8,6 +8,7 @@
     "dev": " nodemon ",
     "clean": "rm -r -- dist built",
     "compile": "tsc",
+    "test": "tsc && node --test",
     "build": "yarn run compile;yarn run build:generic",
     "build:generic": "./build.sh  generic",
     "build:armv6": "./build.sh  rpi"

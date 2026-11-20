@@ -12,10 +12,16 @@ import { spawnSync } from 'child_process';
  * out of the quoting and let its content run as shell syntax. With
  * spawnSync and no shell, the payload is passed as a single argv entry
  * regardless of what characters it contains.
+ *
+ * The script is run directly, so it must be executable and carry a shebang,
+ * the same as when it went through a shell. Its output stays on the server
+ * console (stdio 'inherit'): the default piped stdio would throw it away and
+ * kill a hook that writes more than about 1 MB with ENOBUFS.
  */
 export function runHook(execPath: string, payload: unknown): number {
-  const result = spawnSync(execPath, [JSON.stringify(payload)]);
+  const result = spawnSync(execPath, [JSON.stringify(payload)], { stdio: 'inherit' });
   if (result.error) {
+    console.error(`hook ${execPath} failed to start: ${result.error.message}`);
     return 127;
   }
   return result.status ?? 1;
