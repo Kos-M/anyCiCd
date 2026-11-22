@@ -1,5 +1,7 @@
 # anyCiCd
 
+[![CI](https://github.com/Kos-M/anyCiCd/actions/workflows/ci.yml/badge.svg)](https://github.com/Kos-M/anyCiCd/actions/workflows/ci.yml)
+
 `anyCiCd` is a lightweight and flexible CI/CD webhook handler designed to integrate with various Git platforms (e.g., GitHub, GitLab, Bitbucket) and trigger custom scripts based on repository events. It allows you to automate tasks like deployments, testing, and notifications by executing shell scripts in response to specific webhook payloads.
 
 ## Features
@@ -297,7 +299,14 @@ Contributions are always welcome! To contribute, please follow these steps:
 2.  **Create a new branch** for your feature or bug fix (e.g., `feature/my-new-feature` or `bugfix/fix-issue-123`).
 3.  **Make your changes**, ensuring they adhere to the existing coding style and conventions.
 4.  **Write clear and concise commit messages.**
-5.  **Test your changes thoroughly** (`yarn test` runs the unit tests).
+5.  **Test your changes thoroughly.** Before opening a pull request, run the same checks CI runs:
+    ```bash
+    yarn format:check   # or `yarn format` to fix
+    yarn lint
+    yarn typecheck
+    yarn test
+    ```
+    Every pull request runs these on Linux, Windows and macOS with Node 22, 24 and 26, plus a build and smoke test of the packaged binary.
 6.  **Update documentation** as necessary to reflect your changes.
 7.  **Open a pull request** to the `master` branch, providing a detailed description of your changes.
 

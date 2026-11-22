@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  # Called by release.yml so a tag is only released after the full suite passes.
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  lint:
+    name: Lint, format & typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn format:check
+      - run: yarn lint
+      - run: yarn typecheck
+
+  test:
+    name: Test (${{ matrix.os }}, Node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node: [22, 24, 26]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn test
+
+  build:
+    name: Build & smoke-test binary
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn build
+      - name: Smoke-test the Linux binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          bin=$(find built -type f -name '*-generic-linux' | head -n 1)
+          test -x "$bin"
+          PORT=3999 SECRET=smoke "$bin" > smoke.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true; cat smoke.log' EXIT
+          code=000
+          for _ in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3999/does-not-exist || true)
+            [ "$code" != "000" ] && break
+            sleep 1
+          done
+          echo "unknown route -> $code"; [ "$code" = "404" ]
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'content-type: application/json' -d '{"a":1}' http://127.0.0.1:3999/api/repo/push)
+          echo "unsigned webhook -> $code"; [ "$code" = "400" ]
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-zips
+          path: built/*.zip
+          if-no-files-found: error
+          retention-days: 7
+
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/dependency-review-action@bbc44d14a204704ccc493733616cd1e93a0321ec # v5.0.1
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure

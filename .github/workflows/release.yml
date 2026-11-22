@@ -1,0 +1,59 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  check-version:
+    name: Tag matches package.json
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Compare tag and version
+        shell: bash
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match package.json version ${version} (expected v${version})"
+            exit 1
+          fi
+
+  ci:
+    name: CI
+    needs: check-version
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    name: Publish GitHub release
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # create the release
+      id-token: write # sign the build provenance attestation
+      attestations: write # store the attestation
+    steps:
+      # The exact zips that passed CI, built once in the ci workflow's build job.
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-zips
+          path: built
+      - name: Checksums
+        working-directory: built
+        run: sha256sum *.zip | tee SHA256SUMS
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: built/*.zip
+      - uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
+        with:
+          generate_release_notes: true
+          files: |
+            built/*linux.zip
+            built/SHA256SUMS
