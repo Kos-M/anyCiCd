@@ -16,27 +16,28 @@ function VerifySignature(req: Request, res: Response, next: NextFunction): void 
     return;
   }
   const rawBody: string = req.rawBody || '';
-  let matchProvider: boolean =false;
+  let matchProvider: boolean = false;
   sigHeaderNames.forEach((headerKey) => {
     let headerSignature: Buffer = Buffer.from(req.get(headerKey) || '', 'utf8');
-    if (headerKey === 'X-Hub-Signature-256'){
+    if (headerKey === 'X-Hub-Signature-256') {
       const githubSignature = req.get(headerKey)?.replace('sha256=', '');
       headerSignature = Buffer.from(githubSignature || '', 'utf8');
-    }else if ( headerKey === 'X-Gitlab-Token' && secret !== null && secret !== '' && secret !== undefined){ // plain secret format for Gitlab
-      if( secret === req.get(headerKey)  ){
+    } else if (headerKey === 'X-Gitlab-Token' && secret !== null && secret !== '' && secret !== undefined) {
+      // plain secret format for Gitlab
+      if (secret === req.get(headerKey)) {
         matchProvider = true;
         next();
       }
     }
     const hmac: crypto.Hmac = crypto.createHmac(sigHashAlg, secret);
     const digest: Buffer = Buffer.from(`${hmac.update(rawBody).digest('hex')}`, 'utf8');
-    
+
     if (headerSignature.length === digest.length && crypto.timingSafeEqual(digest, headerSignature)) {
-      matchProvider = true
+      matchProvider = true;
       next();
     }
   });
-  if ( matchProvider) return;
+  if (matchProvider) return;
   res.status(400).json({
     error: 'Data validation failed',
     reason: `Secret validation failed, supported signature headers:${sigHeaderNames}`,

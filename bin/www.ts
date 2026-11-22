@@ -41,9 +41,7 @@ function onError(error: NodeJS.ErrnoException): void {
     throw error;
   }
 
-  const bind = typeof port === 'string'
-    ? `Pipe ${port}`
-    : `Port ${port}`;
+  const bind = typeof port === 'string' ? `Pipe ${port}` : `Port ${port}`;
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
@@ -65,9 +63,7 @@ function onError(error: NodeJS.ErrnoException): void {
  */
 function onListening(): void {
   const addr = server.address();
-  const bind = typeof addr === 'string'
-    ? `pipe ${addr}`
-    : `port ${addr?.port}`;
+  const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr?.port}`;
   console.log(`   AnyCiCd v${pack.version}  `);
   console.log(`> Listening on ${bind}`);
 }
