@@ -78,7 +78,7 @@
    ```
 
    **Script requirements:**
-   Each script is run directly, not through a shell, with the webhook payload as its first argument. It must be executable (for example `chmod +x exec/on_repo_push.sh`) and start with a shebang line such as `#!/bin/bash`. Its output goes to the server console. On Windows the script must be an `.exe`. Node refuses to run `.bat` and `.cmd` files without a shell, and a shell would bring back the quoting problem that running the script directly avoids.
+   Each script is run directly, not through a shell, with the webhook payload as its first argument. It must be executable (for example `chmod +x exec/on_repo_push.sh`) and start with a shebang line such as `#!/bin/bash`. Its output goes to the server console. On Windows the script currently needs to be an `.exe`. Batch and PowerShell support is planned. Node refuses to run `.bat` and `.cmd` files without a shell.
 
 4. **Build the TypeScript files:**
 
