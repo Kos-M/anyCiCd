@@ -77,6 +77,9 @@
    pull_request_event=./exec/on_pull_request.sh
    ```
 
+   **Script requirements:**
+   Each script is run directly, not through a shell, with the webhook payload as its first argument. It must be executable (for example `chmod +x exec/on_repo_push.sh`) and start with a shebang line such as `#!/bin/bash`. Its output goes to the server console. On Windows the script currently needs to be an `.exe`. Batch and PowerShell support is planned. Node refuses to run `.bat` and `.cmd` files without a shell.
+
 4. **Build the TypeScript files:**
 
    ```bash
@@ -294,7 +297,7 @@ Contributions are always welcome! To contribute, please follow these steps:
 2.  **Create a new branch** for your feature or bug fix (e.g., `feature/my-new-feature` or `bugfix/fix-issue-123`).
 3.  **Make your changes**, ensuring they adhere to the existing coding style and conventions.
 4.  **Write clear and concise commit messages.**
-5.  **Test your changes thoroughly.**
+5.  **Test your changes thoroughly** (`yarn test` runs the unit tests).
 6.  **Update documentation** as necessary to reflect your changes.
 7.  **Open a pull request** to the `master` branch, providing a detailed description of your changes.
 
