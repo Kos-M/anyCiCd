@@ -37,7 +37,7 @@
     "express-rate-limit": "^7.1.5",
     "helmet": "^7.1.0",
     "morgan": "~1.12.1",
-    "rotating-file-stream": "^3.2.1"
+    "rotating-file-stream": "^4.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
