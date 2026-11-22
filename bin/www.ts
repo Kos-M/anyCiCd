@@ -3,14 +3,11 @@
 /**
  * Module dependencies.
  */
-import debug from 'debug';
 import http from 'http';
 import app from '../app';
 import pack from '../package.json';
 import dotenv from 'dotenv';
 dotenv.config();
-
-const logger = debug('anycicd:server');
 
 /**
  * Create HTTP server.
@@ -44,9 +41,7 @@ function onError(error: NodeJS.ErrnoException): void {
     throw error;
   }
 
-  const bind = typeof port === 'string'
-    ? `Pipe ${port}`
-    : `Port ${port}`;
+  const bind = typeof port === 'string' ? `Pipe ${port}` : `Port ${port}`;
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
@@ -68,9 +63,7 @@ function onError(error: NodeJS.ErrnoException): void {
  */
 function onListening(): void {
   const addr = server.address();
-  const bind = typeof addr === 'string'
-    ? `pipe ${addr}`
-    : `port ${addr?.port}`;
+  const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr?.port}`;
   console.log(`   AnyCiCd v${pack.version}  `);
   console.log(`> Listening on ${bind}`);
 }

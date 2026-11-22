@@ -1,13 +1,8 @@
 {
   "pkg": {
     "scripts": "./*.js",
-    "assets": [
-      "logs/*",
-      "exec/*"
-    ],
-    "targets": [
-      "latest-linux-arm64"
-    ],
+    "assets": ["logs/*", "exec/*"],
+    "targets": ["latest-linux-arm64"],
     "outputPath": "built"
   }
 }
