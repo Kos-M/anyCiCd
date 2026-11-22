@@ -22,7 +22,7 @@ function VerifySignature(req: Request, res: Response, next: NextFunction): void 
     if (headerKey === 'X-Hub-Signature-256'){
       const githubSignature = req.get(headerKey)?.replace('sha256=', '');
       headerSignature = Buffer.from(githubSignature || '', 'utf8');
-    }else if ( headerKey === 'X-Gitlab-Token' && secret != null && secret !== '' && secret !== undefined){ // plain secret format for Gitlab
+    }else if ( headerKey === 'X-Gitlab-Token' && secret !== null && secret !== '' && secret !== undefined){ // plain secret format for Gitlab
       if( secret === req.get(headerKey)  ){
         matchProvider = true;
         next();
@@ -31,7 +31,7 @@ function VerifySignature(req: Request, res: Response, next: NextFunction): void 
     const hmac: crypto.Hmac = crypto.createHmac(sigHashAlg, secret);
     const digest: Buffer = Buffer.from(`${hmac.update(rawBody).digest('hex')}`, 'utf8');
     
-    if (headerSignature.length == digest.length && crypto.timingSafeEqual(digest, headerSignature)) {
+    if (headerSignature.length === digest.length && crypto.timingSafeEqual(digest, headerSignature)) {
       matchProvider = true
       next();
     }

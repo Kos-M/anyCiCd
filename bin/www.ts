@@ -3,14 +3,11 @@
 /**
  * Module dependencies.
  */
-import debug from 'debug';
 import http from 'http';
 import app from '../app';
 import pack from '../package.json';
 import dotenv from 'dotenv';
 dotenv.config();
-
-const logger = debug('anycicd:server');
 
 /**
  * Create HTTP server.

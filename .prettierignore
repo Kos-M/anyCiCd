@@ -1,0 +1,7 @@
+dist/
+built/
+logs/
+node_modules/
+.claude/
+yarn.lock
+*.md
