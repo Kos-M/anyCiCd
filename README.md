@@ -52,7 +52,7 @@
    ```
 
    **Repository Event Script Configuration:**
-   For each repository event, you can define an environment variable pointing to a shell script that will be executed when the corresponding webhook is received. The full JSON payload of the webhook will be passed as the first argument to your script.
+   For each repository event, you can define an environment variable pointing to a shell script that will be executed when the corresponding webhook is received. The full JSON payload of the webhook is sent to your script on stdin and also saved to a temporary file, whose path is in the `ANYCICD_PAYLOAD_FILE` environment variable. The name of the event, such as `repo_push`, is in `ANYCICD_EVENT`.
 
    Example:
    ```
@@ -80,7 +80,7 @@
    ```
 
    **Script requirements:**
-   Each script is run directly, not through a shell, with the webhook payload as its first argument. It must be executable (for example `chmod +x exec/on_repo_push.sh`) and start with a shebang line such as `#!/bin/bash`. Its output goes to the server console. On Windows the script currently needs to be an `.exe`. Batch and PowerShell support is planned. Node refuses to run `.bat` and `.cmd` files without a shell.
+   Each script is run directly, never through a shell string. The webhook payload is sent on stdin and saved to a temporary file (mode 0600, deleted when the script ends) named in `ANYCICD_PAYLOAD_FILE`. Use the file for large payloads. `ANYCICD_EVENT` holds the event name. On POSIX the payload is also passed as the first argument (`$1`) for now. That is deprecated and is left out when the payload is larger than 100 KB. On POSIX the script must be executable (for example `chmod +x exec/on_repo_push.sh`) and start with a shebang line such as `#!/bin/bash`. On Windows the script can be `.exe`, `.com`, `.bat`, `.cmd` or `.ps1`. Other types are refused. Paths of `.bat` and `.cmd` scripts must not contain any of `" % ^ & | < > !`. `.ps1` scripts run with `powershell.exe -NoProfile -NonInteractive -File`, so the machine execution policy has to allow local scripts. Its output goes to the server console.
 
 4. **Build the TypeScript files:**
 
@@ -106,7 +106,7 @@ All API endpoints expect `POST` requests with a JSON payload and require signatu
 
 #### Repository Events
 
-These endpoints handle various repository-related events. The full webhook payload is passed as an argument to the configured script.
+These endpoints handle various repository-related events. The full webhook payload is sent to the configured script, see "Script requirements" above.
 
 ```http
   POST /api/repo/{event_type}
