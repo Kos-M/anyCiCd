@@ -19,6 +19,7 @@ const posixOnly = { skip: isWindows ? 'POSIX-only: runs a shebang script' : fals
 const SECRET = 'test-secret';
 const hookDir = fs.mkdtempSync(path.join(os.tmpdir(), 'anycicd-webhook-'));
 const received = path.join(hookDir, 'received');
+const runs = path.join(hookDir, 'runs');
 const marker = path.join(hookDir, 'INJECTED_PROOF');
 
 function makeHook(name: string, body: string): string {
@@ -30,7 +31,7 @@ function makeHook(name: string, body: string): string {
 
 process.env.SECRET = SECRET;
 if (!isWindows) {
-  process.env.repo_push = makeHook('record.sh', `printf '%s' "$1" > "${received}"`);
+  process.env.repo_push = makeHook('record.sh', `printf '%s' "$1" > "${received}"; printf x >> "${runs}"`);
   process.env.repo_create = makeHook('fail.sh', 'exit 3');
   process.env.issues_open = makeHook('issue.sh', `printf '%s' "$1" > "${received}"`);
 }
@@ -125,6 +126,64 @@ test('reports a failing hook as 500 with its exit code', posixOnly, async () => 
   const res = await post('/api/repo/create', { a: 1 });
   assert.strictEqual(res.status, 500);
   assert.strictEqual(res.body.reason, 'Executable exit with status code 3');
+});
+
+test('a form-encoded webhook is passed to the hook as JSON', posixOnly, async () => {
+  fs.rmSync(received, { force: true });
+  const payload = { ref: 'refs/heads/main', head_commit: { message: 'from a form' } };
+  const body = `payload=${encodeURIComponent(JSON.stringify(payload))}`;
+  const res = await fetch(`${baseUrl}/api/repo/push`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      'x-gitea-event': 'push',
+      'x-gitea-signature': hmac(body),
+    },
+    body,
+  });
+  const text = await res.text();
+  assert.strictEqual(res.status, 200, text);
+  assert.strictEqual(fs.readFileSync(received, 'utf8'), JSON.stringify(payload));
+});
+
+test('a signed push is not accepted on the delete route', posixOnly, async () => {
+  fs.rmSync(received, { force: true });
+  fs.rmSync(runs, { force: true });
+  const payload = { ref: 'refs/heads/main' };
+  const body = JSON.stringify(payload);
+  const res = await fetch(`${baseUrl}/api/repo/delete`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-github-event': 'push',
+      'x-hub-signature-256': `sha256=${hmac(body)}`,
+    },
+    body,
+  });
+  const text = await res.text();
+  assert.strictEqual(res.status, 400, text);
+  assert.strictEqual(fs.existsSync(runs), false);
+});
+
+test('a push event header still runs the push hook once', posixOnly, async () => {
+  fs.rmSync(received, { force: true });
+  fs.rmSync(runs, { force: true });
+  const payload = { ref: 'refs/heads/main' };
+  const body = JSON.stringify(payload);
+  const signature = hmac(body);
+  const res = await fetch(`${baseUrl}/api/repo/push`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-github-event': 'push',
+      'x-hub-signature-256': `sha256=${signature}`,
+      'x-gitea-signature': signature,
+    },
+    body,
+  });
+  assert.strictEqual(res.status, 200);
+  assert.strictEqual(fs.readFileSync(received, 'utf8'), JSON.stringify(payload));
+  assert.strictEqual(fs.readFileSync(runs, 'utf8'), 'x');
 });
 
 test('issue routes only run the hook for the matching action', posixOnly, async () => {

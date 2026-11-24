@@ -10,7 +10,7 @@ import { createStream } from 'rotating-file-stream';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 dotenv.config();
-import { VerifySignature } from './routes/signatureVerify';
+import { VerifySignature, expectMatchingEvent } from './routes/signatureVerify';
 
 const app = express();
 
@@ -59,15 +59,42 @@ app.use(compression({ filter: shouldCompress }));
 app.use(cookieParser());
 
 app.use(bodyParser.json({ verify: rawBodySaver }));
-app.use(bodyParser.raw({ verify: rawBodySaver, type: () => true }));
-app.use(bodyParser.urlencoded({ extended: true, verify: rawBodySaver }));
-// app.use(express.static(path.join(__dirname, 'public')));
+app.use(bodyParser.urlencoded({ extended: false, verify: rawBodySaver }));
+// Anything still unparsed (not JSON or a form) is kept as bytes for the signature.
+app.use(
+  bodyParser.raw({
+    verify: rawBodySaver,
+    type: (req) => {
+      const contentType = req.headers['content-type'] || '';
+      return !contentType.includes('application/json') && !contentType.includes('application/x-www-form-urlencoded');
+    },
+  }),
+);
+// Gitea and GitHub can post `payload=<json>` instead of a JSON body.
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  const contentType = req.headers['content-type'] || '';
+  const body = req.body as { payload?: unknown } | undefined;
+  if (
+    contentType.includes('application/x-www-form-urlencoded') &&
+    body &&
+    typeof body === 'object' &&
+    !Buffer.isBuffer(body) &&
+    typeof body.payload === 'string'
+  ) {
+    try {
+      req.body = JSON.parse(body.payload);
+    } catch {
+      // Leave the form fields in place when payload is not JSON.
+    }
+  }
+  next();
+});
 
 import { issuesRoutes, pullRoutes, repoRoutes } from './routes';
 
-app.use('/api/issues', VerifySignature, issuesRoutes);
-app.use('/api/pull', VerifySignature, pullRoutes);
-app.use('/api/repo', VerifySignature, repoRoutes);
+app.use('/api/issues', VerifySignature, expectMatchingEvent, issuesRoutes);
+app.use('/api/pull', VerifySignature, expectMatchingEvent, pullRoutes);
+app.use('/api/repo', VerifySignature, expectMatchingEvent, repoRoutes);
 
 // catch 404 and forward to error handler
 app.use((req: Request, res: Response, next: NextFunction) => {
