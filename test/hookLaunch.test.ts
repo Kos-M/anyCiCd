@@ -66,7 +66,7 @@ const posixRecorder = [
   'cp "$ANYCICD_PAYLOAD_FILE" "$D/file.txt"',
   'printf "%s" "$ANYCICD_EVENT" > "$D/event.txt"',
   'printf "%s" "$ANYCICD_PAYLOAD_FILE" > "$D/path.txt"',
-  'ls -ld "$ANYCICD_PAYLOAD_FILE" "$(dirname "$ANYCICD_PAYLOAD_FILE")" > "$D/modes.txt"',
+  '{ ls -ld "$ANYCICD_PAYLOAD_FILE"; ls -ld "$(dirname "$ANYCICD_PAYLOAD_FILE")"; } > "$D/modes.txt"',
   '',
 ].join('\n');
 
