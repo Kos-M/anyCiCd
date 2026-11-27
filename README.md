@@ -98,7 +98,7 @@
 
    On POSIX the payload is also passed as the first argument (`$1`) for now. That is deprecated and is left out when the payload is larger than 100 KB. The argument list can be read by other local users (for example in `/proc/<pid>/cmdline`), which is one more reason to move to the file. On POSIX the script must be executable (for example `chmod +x exec/on_repo_push.sh`) and start with a shebang line such as `#!/bin/bash`.
 
-   On Windows the script can be `.exe`, `.com`, `.bat`, `.cmd` or `.ps1`. Other types are refused. `cmd.exe` and `powershell.exe` are started by their full path under `%SystemRoot%\System32`. Paths of `.bat` and `.cmd` scripts must not contain any of `" % ^ & | < > !`. `.ps1` scripts run with `-NoProfile -NonInteractive -File`. The machine execution policy has to allow local scripts.
+   On Windows the script can be `.exe`, `.com`, `.bat`, `.cmd` or `.ps1`. Other types are refused. `cmd.exe` is taken from the `ComSpec` variable, falling back to `%SystemRoot%\System32\cmd.exe`. `powershell.exe` is started by its full path under `%SystemRoot%\System32\WindowsPowerShell\v1.0`. Paths of `.bat` and `.cmd` scripts must not contain any of `" % ^ & | < > !`. `.ps1` scripts run with `-NoProfile -NonInteractive -File`. The machine execution policy has to allow local scripts.
 
    **Batch hooks must not expand the payload.** The natural way to read the file in batch, `set /p P=<"%ANYCICD_PAYLOAD_FILE%"` and then `%P%`, lets the payload run commands. `cmd.exe` reads the `\"` that JSON uses as an ordinary quote. A value like `x" & calc & rem` breaks out of the quotes and runs `calc`. Call PowerShell or another program to parse the file instead.
 

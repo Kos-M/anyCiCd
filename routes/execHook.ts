@@ -157,7 +157,7 @@ export function runHook(execPath: string, payload: unknown, event?: string): num
   } finally {
     if (dir) {
       try {
-        fs.rmSync(dir, { recursive: true, force: true });
+        fs.rmSync(dir, { recursive: true, force: true, maxRetries: 3 });
       } catch (err) {
         // On Windows this fails while a process the hook left behind still holds the file open.
         console.warn(`hook ${execPath}: could not remove ${dir}: ${(err as Error).message}`);

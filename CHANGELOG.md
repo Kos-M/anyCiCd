@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Changed: hook payload delivery (#6)
+
+- The payload is now written to a temporary file (mode 0600, in a private folder, deleted when the hook exits). Its path is in `ANYCICD_PAYLOAD_FILE`. The event name, such as `repo_push`, is in `ANYCICD_EVENT`. Use the file for large payloads. It also removes the argument size limit that broke the launch for big issue bodies.
+- **Hooks get no stdin.** Before, they inherited the server's stdin. The payload contains text that anyone can write. It is not put on stdin.
+- **Windows `.exe` hooks no longer get the payload as the first argument.** POSIX keeps `$1` for one release with a deprecation warning (it is left out above 100 KB). Windows does not. A 2.1.0 `.exe` hook that reads `argv[1]` breaks and must read `ANYCICD_PAYLOAD_FILE` instead.
+- **New:** Windows hooks can be `.bat`, `.cmd` and `.ps1` as well as `.exe` and `.com`. They are started by file type from a fixed list, never through a shell string. Other types are refused. Batch hooks must not expand the payload with `%...%`. See the README.
+- Problems with the temporary files are logged and the route answers normally. They no longer end in an error page.
+
 ## 2.1.0
 
 ### Security

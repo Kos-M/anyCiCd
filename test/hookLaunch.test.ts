@@ -253,6 +253,26 @@ test('a .ps1 hook gets the file and the event, even for a 300 KB payload', power
   });
 });
 
+test('the README PowerShell example reads and parses the payload', powershellOnly, () => {
+  requirePowershell();
+  withTempDir((dir) => {
+    const hook = write(
+      dir,
+      'hook.ps1',
+      [
+        '$payload = Get-Content -Raw -Encoding UTF8 $env:ANYCICD_PAYLOAD_FILE | ConvertFrom-Json',
+        '[IO.File]::WriteAllText("$PSScriptRoot\\title.txt", $payload.title)',
+        '[IO.File]::WriteAllText("$PSScriptRoot\\count.txt", [string]$payload.count)',
+        '',
+      ].join('\r\n'),
+    );
+    const payload = { title: 'h\u00e9llo "quoted" & $(nope)', count: 5 };
+    assert.strictEqual(runHook(hook, payload, 'issues_open'), 0);
+    assert.strictEqual(fs.readFileSync(path.join(dir, 'title.txt'), 'utf8'), payload.title);
+    assert.strictEqual(fs.readFileSync(path.join(dir, 'count.txt'), 'utf8'), '5');
+  });
+});
+
 test('a .ps1 hook exit code comes back', powershellOnly, () => {
   requirePowershell();
   withTempDir((dir) => {
