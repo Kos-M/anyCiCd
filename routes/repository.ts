@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { runHook } from './execHook';
+import { requireEvent } from './signatureVerify';
 
 const router = express.Router();
 
@@ -18,14 +19,14 @@ const releasePublishExec: string | null = process.env.repo_release_publish || nu
 const releaseUpdateExec: string | null = process.env.repo_release_update || null;
 const releaseDeleteExec: string | null = process.env.repo_release_delete || null;
 
-router.post('/push', (req: Request, res: Response, next: NextFunction) => {
+router.post('/push', requireEvent('push'), (req: Request, res: Response, next: NextFunction) => {
   if (!pushExec) {
     return res.status(500).json({
       status: 'Failed',
       reason: 'Not defined executable script for this event',
     });
   }
-  const execReturnCode: number = runHook(pushExec, req.body);
+  const execReturnCode: number = runHook(pushExec, req.body, req.exactPayload);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -37,14 +38,14 @@ router.post('/push', (req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-router.post('/create', (req: Request, res: Response, next: NextFunction) => {
+router.post('/create', requireEvent('create'), (req: Request, res: Response, next: NextFunction) => {
   if (!createExec) {
     return res.status(500).json({
       status: 'Failed',
       reason: 'Not defined executable script for this event',
     });
   }
-  const execReturnCode: number = runHook(createExec, req.body);
+  const execReturnCode: number = runHook(createExec, req.body, req.exactPayload);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -56,14 +57,14 @@ router.post('/create', (req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-router.post('/delete', (req: Request, res: Response, next: NextFunction) => {
+router.post('/delete', requireEvent('delete'), (req: Request, res: Response, next: NextFunction) => {
   if (!deleteExec) {
     return res.status(500).json({
       status: 'Failed',
       reason: 'Not defined executable script for this event',
     });
   }
-  const execReturnCode: number = runHook(deleteExec, req.body);
+  const execReturnCode: number = runHook(deleteExec, req.body, req.exactPayload);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -75,14 +76,14 @@ router.post('/delete', (req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-router.post('/branch/create', (req: Request, res: Response, next: NextFunction) => {
+router.post('/branch/create', requireEvent('create'), (req: Request, res: Response, next: NextFunction) => {
   if (!branhCreateExec) {
     return res.status(500).json({
       status: 'Failed',
       reason: 'Not defined executable script for this event',
     });
   }
-  const execReturnCode: number = runHook(branhCreateExec, req.body);
+  const execReturnCode: number = runHook(branhCreateExec, req.body, req.exactPayload);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -94,14 +95,14 @@ router.post('/branch/create', (req: Request, res: Response, next: NextFunction) 
   });
 });
 
-router.post('/branch/delete', (req: Request, res: Response, next: NextFunction) => {
+router.post('/branch/delete', requireEvent('delete'), (req: Request, res: Response, next: NextFunction) => {
   if (!branhDeleteExec) {
     return res.status(500).json({
       status: 'Failed',
       reason: 'Not defined executable script for this event',
     });
   }
-  const execReturnCode: number = runHook(branhDeleteExec, req.body);
+  const execReturnCode: number = runHook(branhDeleteExec, req.body, req.exactPayload);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -113,14 +114,14 @@ router.post('/branch/delete', (req: Request, res: Response, next: NextFunction) 
   });
 });
 
-router.post('/tag/create', (req: Request, res: Response, next: NextFunction) => {
+router.post('/tag/create', requireEvent('create'), (req: Request, res: Response, next: NextFunction) => {
   if (!tagCreateExec) {
     return res.status(500).json({
       status: 'Failed',
       reason: 'Not defined executable script for this event',
     });
   }
-  const execReturnCode: number = runHook(tagCreateExec, req.body);
+  const execReturnCode: number = runHook(tagCreateExec, req.body, req.exactPayload);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -132,14 +133,14 @@ router.post('/tag/create', (req: Request, res: Response, next: NextFunction) => 
   });
 });
 
-router.post('/tag/delete', (req: Request, res: Response, next: NextFunction) => {
+router.post('/tag/delete', requireEvent('delete'), (req: Request, res: Response, next: NextFunction) => {
   if (!tagDeleteExec) {
     return res.status(500).json({
       status: 'Failed',
       reason: 'Not defined executable script for this event',
     });
   }
-  const execReturnCode: number = runHook(tagDeleteExec, req.body);
+  const execReturnCode: number = runHook(tagDeleteExec, req.body, req.exactPayload);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -151,14 +152,14 @@ router.post('/tag/delete', (req: Request, res: Response, next: NextFunction) => 
   });
 });
 
-router.post('/fork', (req: Request, res: Response, next: NextFunction) => {
+router.post('/fork', requireEvent('fork'), (req: Request, res: Response, next: NextFunction) => {
   if (!forkExec) {
     return res.status(500).json({
       status: 'Failed',
       reason: 'Not defined executable script for this event',
     });
   }
-  const execReturnCode: number = runHook(forkExec, req.body);
+  const execReturnCode: number = runHook(forkExec, req.body, req.exactPayload);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -170,14 +171,14 @@ router.post('/fork', (req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-router.post('/release/publish', (req: Request, res: Response, next: NextFunction) => {
+router.post('/release/publish', requireEvent('release'), (req: Request, res: Response, next: NextFunction) => {
   if (!releasePublishExec) {
     return res.status(500).json({
       status: 'Failed',
       reason: 'Not defined executable script for this event',
     });
   }
-  const execReturnCode: number = runHook(releasePublishExec, req.body);
+  const execReturnCode: number = runHook(releasePublishExec, req.body, req.exactPayload);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -189,14 +190,14 @@ router.post('/release/publish', (req: Request, res: Response, next: NextFunction
   });
 });
 
-router.post('/release/update', (req: Request, res: Response, next: NextFunction) => {
+router.post('/release/update', requireEvent('release'), (req: Request, res: Response, next: NextFunction) => {
   if (!releaseUpdateExec) {
     return res.status(500).json({
       status: 'Failed',
       reason: 'Not defined executable script for this event',
     });
   }
-  const execReturnCode: number = runHook(releaseUpdateExec, req.body);
+  const execReturnCode: number = runHook(releaseUpdateExec, req.body, req.exactPayload);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -208,14 +209,14 @@ router.post('/release/update', (req: Request, res: Response, next: NextFunction)
   });
 });
 
-router.post('/release/delete', (req: Request, res: Response, next: NextFunction) => {
+router.post('/release/delete', requireEvent('release'), (req: Request, res: Response, next: NextFunction) => {
   if (!releaseDeleteExec) {
     return res.status(500).json({
       status: 'Failed',
       reason: 'Not defined executable script for this event',
     });
   }
-  const execReturnCode: number = runHook(releaseDeleteExec, req.body);
+  const execReturnCode: number = runHook(releaseDeleteExec, req.body, req.exactPayload);
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',

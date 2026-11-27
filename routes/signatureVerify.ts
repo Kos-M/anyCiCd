@@ -5,6 +5,10 @@ const secret: string | undefined = process.env.SECRET;
 const sigHeaderNames: string[] = ['x-gitea-signature', 'X-Gitlab-Token', 'X-Hub-Signature-256'];
 const sigHashAlg: string = 'sha256';
 
+function hexHmac(key: string, data: string): Buffer {
+  return Buffer.from(crypto.createHmac(sigHashAlg, key).update(data).digest('hex'), 'utf8');
+}
+
 function VerifySignature(req: Request, res: Response, next: NextFunction): void {
   if (!req.body || !req.rawBody) {
     res.setHeader('Content-Type', 'application/json');
@@ -16,6 +20,12 @@ function VerifySignature(req: Request, res: Response, next: NextFunction): void 
     return;
   }
   const rawBody: string = req.rawBody || '';
+  // GitHub signs the request body as sent. Gitea signs the JSON payload, which
+  // for a `payload=<json>` form is the decoded field and not the form body.
+  const signed: { digest: Buffer; exactPayload?: string }[] = [{ digest: hexHmac(secret, rawBody) }];
+  if (req.formPayload !== undefined) {
+    signed.push({ digest: hexHmac(secret, req.formPayload), exactPayload: req.formPayload });
+  }
   let matchProvider: boolean = false;
   for (const headerKey of sigHeaderNames) {
     if (headerKey === 'X-Gitlab-Token') {
@@ -31,9 +41,10 @@ function VerifySignature(req: Request, res: Response, next: NextFunction): void 
       presented = presented.replace(/^sha256=/i, '');
     }
     const headerSignature: Buffer = Buffer.from(presented, 'utf8');
-    const digest: Buffer = Buffer.from(crypto.createHmac(sigHashAlg, secret).update(rawBody).digest('hex'), 'utf8');
-
-    if (headerSignature.length === digest.length && crypto.timingSafeEqual(digest, headerSignature)) {
+    const match = signed.find(({ digest }) => headerSignature.length === digest.length && crypto.timingSafeEqual(digest, headerSignature));
+    if (match) {
+      // The hook must get the text that was signed, so keep it for runHook.
+      req.exactPayload = match.exactPayload;
       matchProvider = true;
       break;
     }
@@ -48,52 +59,29 @@ function VerifySignature(req: Request, res: Response, next: NextFunction): void 
   next();
 }
 
-// GitHub and Gitea send the same event names. The route, not this header,
-// used to decide which script ran, so a signed push could be replayed onto
-// the delete URL. Absent header keeps the old behavior.
-const routeEvents: Record<string, string[]> = {
-  '/api/repo/push': ['push'],
-  '/api/repo/create': ['create'],
-  '/api/repo/delete': ['delete'],
-  '/api/repo/fork': ['fork'],
-  '/api/repo/branch/create': ['create'],
-  '/api/repo/branch/delete': ['delete'],
-  '/api/repo/tag/create': ['create'],
-  '/api/repo/tag/delete': ['delete'],
-  '/api/repo/release/publish': ['release'],
-  '/api/repo/release/update': ['release'],
-  '/api/repo/release/delete': ['release'],
-  '/api/issues/open': ['issues'],
-  '/api/issues/close': ['issues'],
-  '/api/issues/reopen': ['issues'],
-  '/api/issues/update': ['issues'],
-  '/api/issues/label/clear': ['issues'],
-  '/api/issues/label/update': ['issues'],
-  '/api/issues/assign': ['issues'],
-  '/api/issues/unassign': ['issues'],
-  '/api/issues/milestone': ['issues'],
-  '/api/issues/demilestone': ['issues'],
-  '/api/issues/comment/create': ['issue_comment'],
-  '/api/issues/comment/update': ['issue_comment'],
-  '/api/issues/comment/delete': ['issue_comment'],
-};
-
-function expectMatchingEvent(req: Request, res: Response, next: NextFunction): void {
-  const header = req.get('x-github-event') || req.get('x-gitea-event');
-  if (!header) {
+// Wrong-URL guard: catches a webhook that was pointed at a route for another
+// event. GitHub and Gitea send the same event names. The header is not part of
+// the signature, so this is not replay protection. A request without the
+// header runs the route as before.
+function requireEvent(...events: string[]) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const event = (req.get('x-github-event') || req.get('x-gitea-event'))?.toLowerCase();
+    if (!event) {
+      next();
+      return;
+    }
+    // GitHub sends ping when a webhook is created and shows the webhook as
+    // failed unless it gets a 2xx. Answer it without running the hook.
+    if (event === 'ping') {
+      res.status(200).json({ status: 'Completed' });
+      return;
+    }
+    if (!events.includes(event)) {
+      res.status(400).json({ status: 'Failed', reason: `Event "${event}" does not match this route` });
+      return;
+    }
     next();
-    return;
-  }
-  const path = req.originalUrl.split('?')[0].replace(/\/$/, '') || '/';
-  const expected = routeEvents[path];
-  if (expected && !expected.includes(header.toLowerCase())) {
-    res.status(400).json({
-      status: 'Failed',
-      reason: `Event "${header}" does not match this route`,
-    });
-    return;
-  }
-  next();
+  };
 }
 
-export { VerifySignature, expectMatchingEvent };
+export { VerifySignature, requireEvent };

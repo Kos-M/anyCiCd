@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Changed: event header must match the route
+
+- A request whose `X-GitHub-Event` or `X-Gitea-Event` header does not match the route it was sent to now gets `400` and the hook does not run. For example a `delete` event sent to `/api/repo/push`. **If you pointed a "send me everything" webhook at one route such as `/api/repo/push`, the other events will start showing as failed deliveries.** Select only the matching event in the webhook settings, or add one webhook per route.
+- This only catches a webhook pointed at the wrong URL. The event header is not covered by the signature, so it is not replay protection.
+- A `ping` event returns `200` and does not run the hook, so a newly created GitHub webhook shows as delivered.
+- A request without an event header still runs the route as before. GitLab requests are not checked by event name.
+
+### Fixed
+
+- Form-encoded webhooks (`application/x-www-form-urlencoded`, `payload=<json>`) now reach the hook as JSON instead of raw bytes. GitHub signs the form body and Gitea signs the JSON payload inside it. Both are accepted. A Gitea form payload is passed to the hook exactly as it was signed.
+
 ## 2.1.0
 
 ### Security

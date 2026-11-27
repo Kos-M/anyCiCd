@@ -128,40 +128,107 @@ test('reports a failing hook as 500 with its exit code', posixOnly, async () => 
   assert.strictEqual(res.body.reason, 'Executable exit with status code 3');
 });
 
-test('a form-encoded webhook is passed to the hook as JSON', posixOnly, async () => {
+// GitHub signs the form body as sent, `payload=<urlencoded json>`.
+test('a GitHub form-encoded webhook is passed to the hook as JSON', posixOnly, async () => {
   fs.rmSync(received, { force: true });
+  fs.rmSync(runs, { force: true });
   const payload = { ref: 'refs/heads/main', head_commit: { message: 'from a form' } };
   const body = `payload=${encodeURIComponent(JSON.stringify(payload))}`;
   const res = await fetch(`${baseUrl}/api/repo/push`, {
     method: 'POST',
     headers: {
       'content-type': 'application/x-www-form-urlencoded',
-      'x-gitea-event': 'push',
-      'x-gitea-signature': hmac(body),
-    },
-    body,
-  });
-  const text = await res.text();
-  assert.strictEqual(res.status, 200, text);
-  assert.strictEqual(fs.readFileSync(received, 'utf8'), JSON.stringify(payload));
-});
-
-test('a signed push is not accepted on the delete route', posixOnly, async () => {
-  fs.rmSync(received, { force: true });
-  fs.rmSync(runs, { force: true });
-  const payload = { ref: 'refs/heads/main' };
-  const body = JSON.stringify(payload);
-  const res = await fetch(`${baseUrl}/api/repo/delete`, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
       'x-github-event': 'push',
       'x-hub-signature-256': `sha256=${hmac(body)}`,
     },
     body,
   });
   const text = await res.text();
-  assert.strictEqual(res.status, 400, text);
+  assert.strictEqual(res.status, 200, text);
+  assert.strictEqual(fs.readFileSync(received, 'utf8'), JSON.stringify(payload));
+  assert.strictEqual(fs.readFileSync(runs, 'utf8'), 'x');
+});
+
+// Gitea signs the JSON payload only, not the form body it is wrapped in, and
+// sends the same signature in both headers.
+test('a Gitea form-encoded webhook reaches the hook as the signed JSON text', posixOnly, async () => {
+  fs.rmSync(received, { force: true });
+  fs.rmSync(runs, { force: true });
+  // The space after each colon would be lost by JSON.parse + JSON.stringify.
+  const json = '{"ref": "refs/heads/main", "head_commit": {"message": "from a gitea form"}}';
+  assert.notStrictEqual(json, JSON.stringify(JSON.parse(json)));
+  const body = new URLSearchParams({ payload: json }).toString();
+  const signature = hmac(json);
+  const res = await fetch(`${baseUrl}/api/repo/push`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      'x-gitea-event': 'push',
+      'x-github-event': 'push',
+      'x-gitea-signature': signature,
+      'x-hub-signature-256': `sha256=${signature}`,
+    },
+    body,
+  });
+  const text = await res.text();
+  assert.strictEqual(res.status, 200, text);
+  assert.strictEqual(fs.readFileSync(received, 'utf8'), json);
+  assert.strictEqual(fs.readFileSync(runs, 'utf8'), 'x');
+});
+
+test('rejects a form-encoded webhook signed over a different payload', posixOnly, async () => {
+  fs.rmSync(runs, { force: true });
+  const body = new URLSearchParams({ payload: '{"ref": "refs/heads/main"}' }).toString();
+  const signature = hmac('{"ref": "refs/heads/other"}');
+  const res = await fetch(`${baseUrl}/api/repo/push`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      'x-gitea-signature': signature,
+      'x-hub-signature-256': `sha256=${signature}`,
+    },
+    body,
+  });
+  assert.strictEqual(res.status, 400);
+  assert.strictEqual(fs.existsSync(runs), false);
+});
+
+// Express matches routes case-insensitively, so both URLs are the delete route.
+for (const route of ['/api/repo/delete', '/api/repo/DELETE']) {
+  test(`a push event sent to ${route} is rejected`, async () => {
+    fs.rmSync(runs, { force: true });
+    const body = JSON.stringify({ ref: 'refs/heads/main' });
+    const res = await fetch(`${baseUrl}${route}`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-github-event': 'push',
+        'x-hub-signature-256': `sha256=${hmac(body)}`,
+      },
+      body,
+    });
+    const text = await res.text();
+    assert.strictEqual(res.status, 400, text);
+    assert.strictEqual(JSON.parse(text).reason, 'Event "push" does not match this route');
+    assert.strictEqual(fs.existsSync(runs), false);
+  });
+}
+
+test('a ping event is answered with 200 without running the hook', async () => {
+  fs.rmSync(runs, { force: true });
+  const body = JSON.stringify({ zen: 'Keep it logically awesome.', hook_id: 1 });
+  const res = await fetch(`${baseUrl}/api/repo/push`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-github-event': 'ping',
+      'x-hub-signature-256': `sha256=${hmac(body)}`,
+    },
+    body,
+  });
+  const text = await res.text();
+  assert.strictEqual(res.status, 200, text);
+  assert.deepStrictEqual(JSON.parse(text), { status: 'Completed' });
   assert.strictEqual(fs.existsSync(runs), false);
 });
 

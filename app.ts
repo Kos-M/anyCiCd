@@ -10,7 +10,7 @@ import { createStream } from 'rotating-file-stream';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 dotenv.config();
-import { VerifySignature, expectMatchingEvent } from './routes/signatureVerify';
+import { VerifySignature } from './routes/signatureVerify';
 
 const app = express();
 
@@ -19,6 +19,10 @@ declare global {
   namespace Express {
     interface Request {
       rawBody?: string;
+      // Decoded `payload` field of a form webhook, when it holds JSON.
+      formPayload?: string;
+      // Set when the signature covers formPayload itself: the hook gets this text as is.
+      exactPayload?: string;
     }
   }
 }
@@ -83,6 +87,7 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
   ) {
     try {
       req.body = JSON.parse(body.payload);
+      req.formPayload = body.payload;
     } catch {
       // Leave the form fields in place when payload is not JSON.
     }
@@ -92,9 +97,9 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 
 import { issuesRoutes, pullRoutes, repoRoutes } from './routes';
 
-app.use('/api/issues', VerifySignature, expectMatchingEvent, issuesRoutes);
-app.use('/api/pull', VerifySignature, expectMatchingEvent, pullRoutes);
-app.use('/api/repo', VerifySignature, expectMatchingEvent, repoRoutes);
+app.use('/api/issues', VerifySignature, issuesRoutes);
+app.use('/api/pull', VerifySignature, pullRoutes);
+app.use('/api/repo', VerifySignature, repoRoutes);
 
 // catch 404 and forward to error handler
 app.use((req: Request, res: Response, next: NextFunction) => {
