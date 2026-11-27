@@ -38,19 +38,30 @@ function read(dir: string, name: string): string {
   return fs.readFileSync(path.join(dir, name), 'utf8').replace(/\r?\n$/, '');
 }
 
-// PowerShell hooks only run when the machine policy allows local scripts. On CI that must be true: a skip
-// there would hide that no job ever started a PowerShell hook.
+// PowerShell hooks only run when the machine policy allows local scripts. The check starts a real empty script
+// the way runHook does, so it covers the policy and everything else that could stop one from starting. On CI a
+// failure here must fail the two .ps1 tests. A skip would hide that no job ever started a PowerShell hook.
 function powershellProblem(): string | null {
   if (process.platform !== 'win32') return 'not Windows';
-  const exe = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
-  const r = spawnSync(exe, ['-NoProfile', '-NonInteractive', '-Command', 'Get-ExecutionPolicy'], { encoding: 'utf8' });
-  const policy = (r.stdout || '').trim();
-  if (r.status === 0 && policy !== '' && policy !== 'Restricted' && policy !== 'AllSigned') return null;
-  return `status ${r.status}, policy "${policy}", stderr "${(r.stderr || '').trim()}", error ${r.error?.message ?? 'none'}`;
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'anycicd-ps-'));
+  try {
+    const script = write(dir, 'probe.ps1', 'exit 0\r\n');
+    const plan = planLaunch(script);
+    const r = spawnSync(plan.command, plan.args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+    if (r.status === 0) return null;
+    return `status ${r.status}, stderr "${(r.stderr || '').trim()}", error ${r.error?.message ?? 'none'}`;
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 }
 const psProblem = powershellProblem();
 const powershellOnly = {
-  skip: psProblem === null || process.env.CI ? false : `needs Windows PowerShell that runs local scripts (${psProblem})`,
+  skip:
+    process.platform !== 'win32'
+      ? 'Windows-only: starts a Windows hook type'
+      : psProblem === null || process.env.CI
+        ? false
+        : `needs Windows PowerShell that runs local scripts (${psProblem})`,
 };
 function requirePowershell(): void {
   if (psProblem !== null) assert.fail(`PowerShell cannot run local scripts here: ${psProblem}`);
@@ -221,7 +232,7 @@ test('a 300 KB payload reaches a batch hook through the file', windowsOnly, () =
   });
 });
 
-test('a .ps1 hook gets the file and the event, even for a 300 KB payload', { ...windowsOnly, ...powershellOnly }, () => {
+test('a .ps1 hook gets the file and the event, even for a 300 KB payload', powershellOnly, () => {
   requirePowershell();
   withTempDir((dir) => {
     const hook = write(
@@ -242,7 +253,7 @@ test('a .ps1 hook gets the file and the event, even for a 300 KB payload', { ...
   });
 });
 
-test('a .ps1 hook exit code comes back', { ...windowsOnly, ...powershellOnly }, () => {
+test('a .ps1 hook exit code comes back', powershellOnly, () => {
   requirePowershell();
   withTempDir((dir) => {
     const hook = write(dir, 'hook.ps1', 'exit 4\r\n');
