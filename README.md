@@ -52,7 +52,7 @@
    ```
 
    **Repository Event Script Configuration:**
-   For each repository event, you can define an environment variable pointing to a shell script that will be executed when the corresponding webhook is received. The full JSON payload of the webhook is sent to your script on stdin and also saved to a temporary file, whose path is in the `ANYCICD_PAYLOAD_FILE` environment variable. The name of the event, such as `repo_push`, is in `ANYCICD_EVENT`.
+   For each repository event, you can define an environment variable pointing to a shell script that will be executed when the corresponding webhook is received. The full JSON payload of the webhook is saved to a temporary file, whose path is in the `ANYCICD_PAYLOAD_FILE` environment variable. The name of the event, such as `repo_push`, is in `ANYCICD_EVENT`.
 
    Example:
    ```
@@ -80,7 +80,27 @@
    ```
 
    **Script requirements:**
-   Each script is run directly, never through a shell string. The webhook payload is sent on stdin and saved to a temporary file (mode 0600, deleted when the script ends) named in `ANYCICD_PAYLOAD_FILE`. Use the file for large payloads. `ANYCICD_EVENT` holds the event name. On POSIX the payload is also passed as the first argument (`$1`) for now. That is deprecated and is left out when the payload is larger than 100 KB. On POSIX the script must be executable (for example `chmod +x exec/on_repo_push.sh`) and start with a shebang line such as `#!/bin/bash`. On Windows the script can be `.exe`, `.com`, `.bat`, `.cmd` or `.ps1`. Other types are refused. Paths of `.bat` and `.cmd` scripts must not contain any of `" % ^ & | < > !`. `.ps1` scripts run with `powershell.exe -NoProfile -NonInteractive -File`, so the machine execution policy has to allow local scripts. Its output goes to the server console.
+   Each script is run directly, never through a shell string. It gets no stdin. The webhook payload is saved to a temporary file (mode 0600, in a private folder) and its path is in `ANYCICD_PAYLOAD_FILE`. `ANYCICD_EVENT` holds the event name. The payload contains text that anyone can write, such as commit messages and issue bodies. A script must treat it as untrusted data.
+
+   The file is UTF-8 without a BOM. It is deleted when the script exits. A background job that needs it later must copy it first. Its output goes to the server console.
+
+   Reading the payload:
+
+   ```bash
+   jq -r '.ref' "$ANYCICD_PAYLOAD_FILE"
+   ```
+
+   ```powershell
+   $payload = Get-Content -Raw -Encoding UTF8 $env:ANYCICD_PAYLOAD_FILE | ConvertFrom-Json
+   ```
+
+   Windows PowerShell 5.1 reads files as ANSI by default. Keep `-Encoding UTF8`.
+
+   On POSIX the payload is also passed as the first argument (`$1`) for now. That is deprecated and is left out when the payload is larger than 100 KB. The argument list can be read by other local users (for example in `/proc/<pid>/cmdline`), which is one more reason to move to the file. On POSIX the script must be executable (for example `chmod +x exec/on_repo_push.sh`) and start with a shebang line such as `#!/bin/bash`.
+
+   On Windows the script can be `.exe`, `.com`, `.bat`, `.cmd` or `.ps1`. Other types are refused. `cmd.exe` and `powershell.exe` are started by their full path under `%SystemRoot%\System32`. Paths of `.bat` and `.cmd` scripts must not contain any of `" % ^ & | < > !`. `.ps1` scripts run with `-NoProfile -NonInteractive -File`. The machine execution policy has to allow local scripts.
+
+   **Batch hooks must not expand the payload.** The natural way to read the file in batch, `set /p P=<"%ANYCICD_PAYLOAD_FILE%"` and then `%P%`, lets the payload run commands. `cmd.exe` reads the `\"` that JSON uses as an ordinary quote. A value like `x" & calc & rem` breaks out of the quotes and runs `calc`. Call PowerShell or another program to parse the file instead.
 
 4. **Build the TypeScript files:**
 

@@ -38,18 +38,25 @@ function read(dir: string, name: string): string {
   return fs.readFileSync(path.join(dir, name), 'utf8').replace(/\r?\n$/, '');
 }
 
-// PowerShell hooks only run when the machine policy allows local scripts.
-function powershellCanRunScripts(): boolean {
-  if (process.platform !== 'win32') return false;
-  const r = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', 'Get-ExecutionPolicy'], { encoding: 'utf8' });
+// PowerShell hooks only run when the machine policy allows local scripts. On CI that must be true: a skip
+// there would hide that no job ever started a PowerShell hook.
+function powershellProblem(): string | null {
+  if (process.platform !== 'win32') return 'not Windows';
+  const exe = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+  const r = spawnSync(exe, ['-NoProfile', '-NonInteractive', '-Command', 'Get-ExecutionPolicy'], { encoding: 'utf8' });
   const policy = (r.stdout || '').trim();
-  return r.status === 0 && policy !== '' && policy !== 'Restricted' && policy !== 'AllSigned';
+  if (r.status === 0 && policy !== '' && policy !== 'Restricted' && policy !== 'AllSigned') return null;
+  return `status ${r.status}, policy "${policy}", stderr "${(r.stderr || '').trim()}", error ${r.error?.message ?? 'none'}`;
 }
+const psProblem = powershellProblem();
 const powershellOnly = {
-  skip: powershellCanRunScripts() ? false : 'needs Windows PowerShell with an execution policy that allows local scripts',
+  skip: psProblem === null || process.env.CI ? false : `needs Windows PowerShell that runs local scripts (${psProblem})`,
 };
+function requirePowershell(): void {
+  if (psProblem !== null) assert.fail(`PowerShell cannot run local scripts here: ${psProblem}`);
+}
 
-// A hook that records stdin, the payload file, the event and the payload file path next to itself.
+// A hook that records its stdin, the payload file, the event and the payload file path next to itself.
 const winRecorder = [
   '@echo off',
   'findstr "^" > "%~dp0stdin.txt"',
@@ -95,14 +102,29 @@ test('planLaunch on Windows starts .exe and .com directly, whatever the case', (
 
 test('planLaunch on Windows starts .bat and .cmd through cmd.exe without a shell string', () => {
   for (const name of ['C:\\hooks\\a.bat', 'C:\\hooks\\a.CMD']) {
-    const plan = planLaunch(name, 'win32');
-    assert.strictEqual(plan.command, 'cmd.exe');
+    const plan = planLaunch(name, 'win32', {});
+    assert.strictEqual(plan.command, 'C:\\Windows\\System32\\cmd.exe');
     assert.deepStrictEqual(plan.args.slice(0, 3), ['/d', '/s', '/c']);
     assert.strictEqual(plan.args.length, 4);
     assert.strictEqual(plan.args[3], `""${name}""`);
     assert.strictEqual(plan.windowsVerbatimArguments, true);
     assert.strictEqual(plan.payloadAsArg, false);
   }
+});
+
+test('planLaunch starts cmd.exe and powershell.exe by full path, never by bare name', () => {
+  const env = { SystemRoot: 'D:\\Win' };
+  assert.strictEqual(planLaunch('C:\\h\\a.cmd', 'win32', env).command, 'D:\\Win\\System32\\cmd.exe');
+  assert.strictEqual(planLaunch('C:\\h\\a.ps1', 'win32', env).command, 'D:\\Win\\System32\\WindowsPowerShell\\v1.0\\powershell.exe');
+  assert.strictEqual(
+    planLaunch('C:\\h\\a.bat', 'win32', { ...env, ComSpec: 'D:\\Win\\System32\\cmd.exe' }).command,
+    'D:\\Win\\System32\\cmd.exe',
+  );
+  assert.strictEqual(planLaunch('C:\\h\\a.cmd', 'win32', {}).command, 'C:\\Windows\\System32\\cmd.exe');
+  assert.strictEqual(
+    planLaunch('C:\\h\\a.ps1', 'win32', { windir: 'E:\\W' }).command,
+    'E:\\W\\System32\\WindowsPowerShell\\v1.0\\powershell.exe',
+  );
 });
 
 test('planLaunch keeps a batch path with spaces inside one pair of quotes', () => {
@@ -117,8 +139,8 @@ test('planLaunch refuses batch paths that cmd.exe would read as syntax', () => {
 });
 
 test('planLaunch on Windows starts .ps1 through powershell.exe with -File', () => {
-  const plan = planLaunch('C:\\hooks\\a.ps1', 'win32');
-  assert.strictEqual(plan.command, 'powershell.exe');
+  const plan = planLaunch('C:\\hooks\\a.ps1', 'win32', {});
+  assert.strictEqual(plan.command, 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe');
   assert.deepStrictEqual(plan.args, ['-NoProfile', '-NonInteractive', '-File', 'C:\\hooks\\a.ps1']);
   assert.strictEqual(plan.payloadAsArg, false);
 });
@@ -138,12 +160,12 @@ test('planLaunch on Windows refuses every other file type', () => {
 
 // ---- real runs on Windows ----
 
-test('a .cmd hook gets the payload on stdin, in the file and the event name', windowsOnly, () => {
+test('a .cmd hook gets the payload in the file and the event name but no stdin', windowsOnly, () => {
   withTempDir((dir) => {
     const hook = makeRecorder(dir);
     const payload = { ref: 'refs/heads/main', n: 1 };
     assert.strictEqual(runHook(hook, payload, 'repo_push'), 0);
-    assert.strictEqual(read(dir, 'stdin.txt'), JSON.stringify(payload));
+    assert.strictEqual(read(dir, 'stdin.txt'), '');
     assert.strictEqual(read(dir, 'file.txt'), JSON.stringify(payload));
     assert.strictEqual(read(dir, 'event.txt'), 'repo_push');
   });
@@ -153,7 +175,7 @@ test('a .bat hook works the same way', windowsOnly, () => {
   withTempDir((dir) => {
     const hook = write(dir, 'hook.bat', winRecorder);
     assert.strictEqual(runHook(hook, { a: 1 }, 'issues_open'), 0);
-    assert.strictEqual(read(dir, 'stdin.txt'), '{"a":1}');
+    assert.strictEqual(read(dir, 'file.txt'), '{"a":1}');
     assert.strictEqual(read(dir, 'event.txt'), 'issues_open');
   });
 });
@@ -164,7 +186,7 @@ test('a batch hook in a folder with spaces still runs', windowsOnly, () => {
     fs.mkdirSync(spaced);
     const hook = write(spaced, 'push hook.cmd', winRecorder);
     assert.strictEqual(runHook(hook, { a: 1 }, 'repo_push'), 0);
-    assert.strictEqual(read(spaced, 'stdin.txt'), '{"a":1}');
+    assert.strictEqual(read(spaced, 'file.txt'), '{"a":1}');
   });
 });
 
@@ -199,21 +221,14 @@ test('a 300 KB payload reaches a batch hook through the file', windowsOnly, () =
   });
 });
 
-test('a hook that never reads a large stdin payload is not reported as failed', windowsOnly, () => {
-  withTempDir((dir) => {
-    const hook = write(dir, 'hook.cmd', '@echo off\r\nexit /b 0\r\n');
-    assert.strictEqual(runHook(hook, { body: 'x'.repeat(5_000_000) }, 'issues_open'), 0);
-  });
-});
-
-test('a .ps1 hook gets stdin, the file and the event, even for a 300 KB payload', { ...windowsOnly, ...powershellOnly }, () => {
+test('a .ps1 hook gets the file and the event, even for a 300 KB payload', { ...windowsOnly, ...powershellOnly }, () => {
+  requirePowershell();
   withTempDir((dir) => {
     const hook = write(
       dir,
       'hook.ps1',
       [
-        '$in = [Console]::In.ReadToEnd()',
-        '[IO.File]::WriteAllText("$PSScriptRoot\\stdin.txt", $in)',
+        '[IO.File]::WriteAllText("$PSScriptRoot\\stdin.txt", [Console]::In.ReadToEnd())',
         '[IO.File]::WriteAllText("$PSScriptRoot\\file.txt", [IO.File]::ReadAllText($env:ANYCICD_PAYLOAD_FILE))',
         '[IO.File]::WriteAllText("$PSScriptRoot\\event.txt", $env:ANYCICD_EVENT)',
         '',
@@ -221,31 +236,31 @@ test('a .ps1 hook gets stdin, the file and the event, even for a 300 KB payload'
     );
     const payload = { title: `it's "quoted" & $(nope) \`tick\``, body: 'x'.repeat(300_000) };
     assert.strictEqual(runHook(hook, payload, 'issues_comment_create'), 0);
-    assert.strictEqual(fs.readFileSync(path.join(dir, 'stdin.txt'), 'utf8'), JSON.stringify(payload));
+    assert.strictEqual(fs.readFileSync(path.join(dir, 'stdin.txt'), 'utf8'), '');
     assert.strictEqual(fs.readFileSync(path.join(dir, 'file.txt'), 'utf8'), JSON.stringify(payload));
     assert.strictEqual(fs.readFileSync(path.join(dir, 'event.txt'), 'utf8'), 'issues_comment_create');
   });
 });
 
 test('a .ps1 hook exit code comes back', { ...windowsOnly, ...powershellOnly }, () => {
+  requirePowershell();
   withTempDir((dir) => {
     const hook = write(dir, 'hook.ps1', 'exit 4\r\n');
     assert.strictEqual(runHook(hook, { a: 1 }, 'repo_push'), 4);
   });
 });
 
-test('a .exe hook is started directly and reads stdin', windowsOnly, () => {
-  const sort = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'sort.exe');
-  const result = runInChild(sort, { a: 1, b: 'two' }, 'repo_push');
+test('a .exe hook is started directly', windowsOnly, () => {
+  const hostname = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'hostname.exe');
+  const result = runInChild(hostname, { a: 1 }, 'repo_push');
   assert.strictEqual(result.status, 0);
-  assert.ok(result.stdout.includes('{"a":1,"b":"two"}'), result.stdout);
+  assert.ok(result.stdout.toLowerCase().includes(os.hostname().toLowerCase()), result.stdout);
 });
 
-test('a .com hook is started directly and reads stdin', windowsOnly, () => {
+test('a .com hook is started directly', windowsOnly, () => {
   const more = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'more.com');
-  const result = runInChild(more, { a: 1, b: 'two' }, 'repo_push');
-  assert.strictEqual(result.status, 0);
-  assert.ok(result.stdout.includes('{"a":1,"b":"two"}'), result.stdout);
+  const result = runInChild(more, { a: 1 }, 'repo_push');
+  assert.strictEqual(result.status, 0, result.stderr);
 });
 
 test('runHook on Windows refuses a .sh hook with 127 and says why', windowsOnly, () => {
@@ -256,12 +271,12 @@ test('runHook on Windows refuses a .sh hook with 127 and says why', windowsOnly,
 
 // ---- real runs on POSIX (CI runs these on Linux and macOS) ----
 
-test('a POSIX hook gets stdin, the file and the event name', posixOnly, () => {
+test('a POSIX hook gets the file and the event name but no stdin', posixOnly, () => {
   withTempDir((dir) => {
     const hook = makeRecorder(dir);
     const payload = { ref: 'refs/heads/main', note: "it's `x` $(y)" };
     assert.strictEqual(runHook(hook, payload, 'repo_push'), 0);
-    assert.strictEqual(read(dir, 'stdin.txt'), JSON.stringify(payload));
+    assert.strictEqual(read(dir, 'stdin.txt'), '');
     assert.strictEqual(read(dir, 'file.txt'), JSON.stringify(payload));
     assert.strictEqual(read(dir, 'event.txt'), 'repo_push');
   });
@@ -288,25 +303,17 @@ test('the temporary files are removed when the hook fails', posixOnly, () => {
   });
 });
 
-test('a hook that never reads a large stdin payload is not reported as failed', posixOnly, () => {
-  withTempDir((dir) => {
-    const hook = write(dir, 'hook.sh', '#!/bin/sh\nexit 0\n', 0o755);
-    assert.strictEqual(runHook(hook, { body: 'x'.repeat(5_000_000) }, 'issues_open'), 0);
-  });
-});
-
-test('a large payload skips $1 but still reaches stdin and the file', posixOnly, () => {
+test('a large payload skips $1 but still reaches the file', posixOnly, () => {
   withTempDir((dir) => {
     const hook = write(
       dir,
       'hook.sh',
-      '#!/bin/sh\nD="$(dirname "$0")"\nprintf "%s" "$1" > "$D/arg.txt"\ncat > "$D/stdin.txt"\ncp "$ANYCICD_PAYLOAD_FILE" "$D/file.txt"\n',
+      '#!/bin/sh\nD="$(dirname "$0")"\nprintf "%s" "$1" > "$D/arg.txt"\ncp "$ANYCICD_PAYLOAD_FILE" "$D/file.txt"\n',
       0o755,
     );
     const payload = { body: 'x'.repeat(MAX_ARG_PAYLOAD_BYTES + 1000) };
     assert.strictEqual(runHook(hook, payload, 'issues_open'), 0);
     assert.strictEqual(read(dir, 'arg.txt'), '');
-    assert.strictEqual(read(dir, 'stdin.txt'), JSON.stringify(payload));
     assert.strictEqual(read(dir, 'file.txt'), JSON.stringify(payload));
   });
 });
@@ -335,6 +342,66 @@ test('ANYCICD_EVENT is not inherited from the server environment', () => {
       else process.env.ANYCICD_EVENT = before;
     }
     assert.strictEqual(read(dir, 'event.txt'), '');
+  });
+});
+
+// ---- problems with the temporary files ----
+
+function exitHook(dir: string, code: number): string {
+  return process.platform === 'win32'
+    ? write(dir, 'exit.cmd', `@echo off\r\nexit /b ${code}\r\n`)
+    : write(dir, 'exit.sh', `#!/bin/sh\nexit ${code}\n`, 0o755);
+}
+
+test('runHook returns 1 and does not throw when the temp folder cannot be made', (t) => {
+  withTempDir((dir) => {
+    const hook = makeRecorder(dir);
+    t.mock.method(fs, 'mkdtempSync', () => {
+      throw Object.assign(new Error('ENOSPC: no space left on device'), { code: 'ENOSPC' });
+    });
+    const errors = t.mock.method(console, 'error', () => {});
+    const code = runHook(hook, { a: 1 }, 'repo_push');
+    const message = String(errors.mock.calls[0]?.arguments[0]);
+    t.mock.restoreAll();
+    assert.strictEqual(code, 1);
+    assert.ok(message.includes('could not prepare the payload file'), message);
+    assert.strictEqual(fs.existsSync(path.join(dir, 'event.txt')), false, 'the hook must not run');
+  });
+});
+
+test('runHook returns 1 and removes the folder when the payload file cannot be written', (t) => {
+  withTempDir((dir) => {
+    const hook = makeRecorder(dir);
+    const made = t.mock.method(fs, 'mkdtempSync');
+    t.mock.method(fs, 'writeFileSync', () => {
+      throw Object.assign(new Error('EACCES: permission denied'), { code: 'EACCES' });
+    });
+    t.mock.method(console, 'error', () => {});
+    const code = runHook(hook, { a: 1 }, 'repo_push');
+    const tempDir = String(made.mock.calls[0]?.result);
+    t.mock.restoreAll();
+    assert.strictEqual(code, 1);
+    assert.ok(tempDir.includes('anycicd-hook-'), tempDir);
+    assert.strictEqual(fs.existsSync(tempDir), false, 'the temp folder must be removed');
+    assert.strictEqual(fs.existsSync(path.join(dir, 'event.txt')), false, 'the hook must not run');
+  });
+});
+
+test('runHook keeps the hook exit code and warns when the temp folder cannot be removed', (t) => {
+  withTempDir((dir) => {
+    const hook = exitHook(dir, 3);
+    const made = t.mock.method(fs, 'mkdtempSync');
+    t.mock.method(fs, 'rmSync', () => {
+      throw Object.assign(new Error('EBUSY: resource busy or locked'), { code: 'EBUSY' });
+    });
+    const warnings = t.mock.method(console, 'warn', () => {});
+    const code = runHook(hook, { a: 1 }, 'repo_push');
+    const tempDir = String(made.mock.calls[0]?.result);
+    const warned = warnings.mock.calls.some((c) => String(c.arguments[0]).includes('could not remove'));
+    t.mock.restoreAll();
+    fs.rmSync(tempDir, { recursive: true, force: true });
+    assert.strictEqual(code, 3);
+    assert.ok(warned, 'a warning must be logged');
   });
 });
 

@@ -20,6 +20,20 @@ const WINDOWS_BATCH = new Set(['.bat', '.cmd']);
 // and the rest chain or redirect commands. A line break ends the command. None can appear in a hook path.
 const CMD_UNSAFE = /["%^&|<>!\r\n]/;
 
+// Start the Windows interpreters by full path. With a bare name Node looks in the server's working directory
+// before PATH. A cmd.exe or powershell.exe placed there would run for every hook.
+function systemRoot(env: NodeJS.ProcessEnv): string {
+  return env.SystemRoot || env.windir || 'C:\\Windows';
+}
+
+function cmdExePath(env: NodeJS.ProcessEnv): string {
+  return env.ComSpec || path.win32.join(systemRoot(env), 'System32', 'cmd.exe');
+}
+
+function powershellExePath(env: NodeJS.ProcessEnv): string {
+  return path.win32.join(systemRoot(env), 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+}
+
 // Linux caps one argument at 128 KiB. Staying under it means $1 can never make the launch fail.
 export const MAX_ARG_PAYLOAD_BYTES = 100_000;
 
@@ -29,7 +43,11 @@ export const MAX_ARG_PAYLOAD_BYTES = 100_000;
  * POSIX runs the file itself, so it needs the executable bit and a shebang. Windows only starts the types
  * below. Anything else is refused instead of being handed to a shell to guess.
  */
-export function planLaunch(execPath: string, platform: NodeJS.Platform = process.platform): LaunchPlan {
+export function planLaunch(
+  execPath: string,
+  platform: NodeJS.Platform = process.platform,
+  env: NodeJS.ProcessEnv = process.env,
+): LaunchPlan {
   if (platform !== 'win32') {
     return { command: execPath, args: [], payloadAsArg: true, windowsVerbatimArguments: false };
   }
@@ -46,12 +64,12 @@ export function planLaunch(execPath: string, platform: NodeJS.Platform = process
     }
     // /s strips the outer pair of quotes. The path keeps its own pair, so it still works with spaces.
     const quoted = `""${path.win32.normalize(execPath)}""`;
-    return { command: 'cmd.exe', args: ['/d', '/s', '/c', quoted], payloadAsArg: false, windowsVerbatimArguments: true };
+    return { command: cmdExePath(env), args: ['/d', '/s', '/c', quoted], payloadAsArg: false, windowsVerbatimArguments: true };
   }
 
   if (ext === '.ps1') {
     return {
-      command: 'powershell.exe',
+      command: powershellExePath(env),
       args: ['-NoProfile', '-NonInteractive', '-File', execPath],
       payloadAsArg: false,
       windowsVerbatimArguments: false,
@@ -68,7 +86,7 @@ function warnAboutArgPayload(): void {
   warnedAboutArgPayload = true;
   console.warn(
     'hooks: passing the payload as the first argument ($1) is deprecated and will be removed. ' +
-      'Read it from stdin or from the file named in ANYCICD_PAYLOAD_FILE instead.',
+      'Read it from the file named in ANYCICD_PAYLOAD_FILE instead.',
   );
 }
 
@@ -76,13 +94,17 @@ function warnAboutArgPayload(): void {
  * Run a configured webhook hook and return its exit code.
  *
  * The payload is JSON and never part of a command line the hook is started from, so its content cannot
- * be read as shell syntax. It goes to the hook on stdin and in a temporary file whose path is in
- * ANYCICD_PAYLOAD_FILE (mode 0600 in a private folder, deleted when the hook ends). The configured event
- * name, such as repo_push, is in ANYCICD_EVENT. POSIX hooks also get the payload as $1 for now when it is
- * small enough to fit.
+ * be read as shell syntax. It is written to a temporary file whose path is in ANYCICD_PAYLOAD_FILE (mode 0600
+ * in a private folder, deleted when the hook ends). The hook gets no stdin: the payload holds text that anyone
+ * can write (commit messages, issue bodies). On stdin it would also reach every program the hook starts
+ * without redirecting its own input. The configured event name, such as repo_push, is in ANYCICD_EVENT.
+ * POSIX hooks also get the payload as $1 for now when it is small enough to fit.
  *
  * The hook's own output stays on the server console (stdio 'inherit'): piped stdio would throw it away and
  * kill a hook that writes more than about 1 MB with ENOBUFS.
+ *
+ * Nothing here throws. A problem with the temporary files is logged and returns 1. The route then answers
+ * normally and never shows an error page with a stack trace.
  */
 export function runHook(execPath: string, payload: unknown, event?: string): number {
   const json = JSON.stringify(payload ?? null);
@@ -101,12 +123,13 @@ export function runHook(execPath: string, payload: unknown, event?: string): num
       warnAboutArgPayload();
       args.push(json);
     } else {
-      console.warn(`hook ${execPath}: the payload is too large for $1. Read it from stdin or ANYCICD_PAYLOAD_FILE.`);
+      console.warn(`hook ${execPath}: the payload is too large for $1. Read it from ANYCICD_PAYLOAD_FILE.`);
     }
   }
 
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'anycicd-hook-'));
+  let dir: string | undefined;
   try {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'anycicd-hook-'));
     const payloadFile = path.join(dir, 'payload.json');
     fs.writeFileSync(payloadFile, json, { mode: 0o600 });
 
@@ -118,21 +141,27 @@ export function runHook(execPath: string, payload: unknown, event?: string): num
     }
 
     const result = spawnSync(plan.command, args, {
-      input: json,
-      stdio: ['pipe', 'inherit', 'inherit'],
+      stdio: ['ignore', 'inherit', 'inherit'],
       env,
       windowsVerbatimArguments: plan.windowsVerbatimArguments,
     });
 
-    // A hook that exits without reading stdin makes the write fail (EPIPE, or EOF on Windows). The hook itself did not fail.
-    const error = result.error as NodeJS.ErrnoException | undefined;
-    const stdinClosedEarly = error?.code === 'EPIPE' || error?.code === 'EOF';
-    if (error && !(stdinClosedEarly && result.status !== null)) {
-      console.error(`hook ${execPath} failed to start: ${error.message}`);
+    if (result.error) {
+      console.error(`hook ${execPath} failed to start: ${result.error.message}`);
       return 127;
     }
     return result.status ?? 1;
+  } catch (err) {
+    console.error(`hook ${execPath} not run, could not prepare the payload file: ${(err as Error).message}`);
+    return 1;
   } finally {
-    fs.rmSync(dir, { recursive: true, force: true });
+    if (dir) {
+      try {
+        fs.rmSync(dir, { recursive: true, force: true });
+      } catch (err) {
+        // On Windows this fails while a process the hook left behind still holds the file open.
+        console.warn(`hook ${execPath}: could not remove ${dir}: ${(err as Error).message}`);
+      }
+    }
   }
 }
