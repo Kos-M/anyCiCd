@@ -29,7 +29,7 @@ router.post('/open', (req: Request, res: Response, next: NextFunction) => {
     });
   }
   if (req.body.action !== 'opened') return res.end();
-  const execReturnCode: number = runHook(openExec, req.body);
+  const execReturnCode: number = runHook(openExec, req.body, 'issues_open');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -49,7 +49,7 @@ router.post('/close', (req: Request, res: Response, next: NextFunction) => {
     });
   }
   if (req.body.action !== 'closed') return res.end();
-  const execReturnCode: number = runHook(closeExec, req.body);
+  const execReturnCode: number = runHook(closeExec, req.body, 'issues_close');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -69,7 +69,7 @@ router.post('/reopen', (req: Request, res: Response, next: NextFunction) => {
     });
   }
   if (req.body.action !== 'reopened') return res.end();
-  const execReturnCode: number = runHook(reopenExec, req.body);
+  const execReturnCode: number = runHook(reopenExec, req.body, 'issues_reopen');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -89,7 +89,7 @@ router.post('/update', (req: Request, res: Response, next: NextFunction) => {
     });
   }
   if (req.body.action !== 'edited') return res.end();
-  const execReturnCode: number = runHook(updateExec, req.body);
+  const execReturnCode: number = runHook(updateExec, req.body, 'issues_update');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -109,7 +109,7 @@ router.post('/label/clear', (req: Request, res: Response, next: NextFunction) =>
     });
   }
   if (req.body.action !== 'label_cleared') return res.end();
-  const execReturnCode: number = runHook(labelClearExec, req.body);
+  const execReturnCode: number = runHook(labelClearExec, req.body, 'issues_label_clear');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -129,7 +129,7 @@ router.post('/label/update', (req: Request, res: Response, next: NextFunction) =
     });
   }
   if (req.body.action !== 'label_updated') return res.end();
-  const execReturnCode: number = runHook(labelUpdateExec, req.body);
+  const execReturnCode: number = runHook(labelUpdateExec, req.body, 'issues_label_update');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -149,7 +149,7 @@ router.post('/comment/create', (req: Request, res: Response, next: NextFunction)
     });
   }
   if (req.body.action !== 'created') return res.end();
-  const execReturnCode: number = runHook(commentCreateExec, req.body);
+  const execReturnCode: number = runHook(commentCreateExec, req.body, 'issues_comment_create');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -169,7 +169,7 @@ router.post('/comment/update', (req: Request, res: Response, next: NextFunction)
     });
   }
   if (req.body.action !== 'edited') return res.end();
-  const execReturnCode: number = runHook(commentUpdateExec, req.body);
+  const execReturnCode: number = runHook(commentUpdateExec, req.body, 'issues_comment_update');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -189,7 +189,7 @@ router.post('/comment/delete', (req: Request, res: Response, next: NextFunction)
     });
   }
   if (req.body.action !== 'deleted') return res.end();
-  const execReturnCode: number = runHook(commentDeleteExec, req.body);
+  const execReturnCode: number = runHook(commentDeleteExec, req.body, 'issues_comment_delete');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -209,7 +209,7 @@ router.post('/assign', (req: Request, res: Response, next: NextFunction) => {
     });
   }
   if (req.body.action !== 'assigned') return res.end();
-  const execReturnCode: number = runHook(assignExec, req.body);
+  const execReturnCode: number = runHook(assignExec, req.body, 'issues_assign');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -229,7 +229,7 @@ router.post('/unassign', (req: Request, res: Response, next: NextFunction) => {
     });
   }
   if (req.body.action !== 'unassigned') return res.end();
-  const execReturnCode: number = runHook(unassignExec, req.body);
+  const execReturnCode: number = runHook(unassignExec, req.body, 'issues_unassign');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -249,7 +249,7 @@ router.post('/milestone', (req: Request, res: Response, next: NextFunction) => {
     });
   }
   if (req.body.action !== 'milestoned') return res.end();
-  const execReturnCode: number = runHook(milestoneExec, req.body);
+  const execReturnCode: number = runHook(milestoneExec, req.body, 'issues_milestone');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -269,7 +269,7 @@ router.post('/demilestone', (req: Request, res: Response, next: NextFunction) =>
     });
   }
   if (req.body.action !== 'demilestoned') return res.end();
-  const execReturnCode: number = runHook(demilestoneExec, req.body);
+  const execReturnCode: number = runHook(demilestoneExec, req.body, 'issues_demilestone');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',

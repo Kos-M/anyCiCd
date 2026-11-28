@@ -25,7 +25,7 @@ router.post('/push', (req: Request, res: Response, next: NextFunction) => {
       reason: 'Not defined executable script for this event',
     });
   }
-  const execReturnCode: number = runHook(pushExec, req.body);
+  const execReturnCode: number = runHook(pushExec, req.body, 'repo_push');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -44,7 +44,7 @@ router.post('/create', (req: Request, res: Response, next: NextFunction) => {
       reason: 'Not defined executable script for this event',
     });
   }
-  const execReturnCode: number = runHook(createExec, req.body);
+  const execReturnCode: number = runHook(createExec, req.body, 'repo_create');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -63,7 +63,7 @@ router.post('/delete', (req: Request, res: Response, next: NextFunction) => {
       reason: 'Not defined executable script for this event',
     });
   }
-  const execReturnCode: number = runHook(deleteExec, req.body);
+  const execReturnCode: number = runHook(deleteExec, req.body, 'repo_delete');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -82,7 +82,7 @@ router.post('/branch/create', (req: Request, res: Response, next: NextFunction) 
       reason: 'Not defined executable script for this event',
     });
   }
-  const execReturnCode: number = runHook(branhCreateExec, req.body);
+  const execReturnCode: number = runHook(branhCreateExec, req.body, 'repo_branch_create');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -101,7 +101,7 @@ router.post('/branch/delete', (req: Request, res: Response, next: NextFunction) 
       reason: 'Not defined executable script for this event',
     });
   }
-  const execReturnCode: number = runHook(branhDeleteExec, req.body);
+  const execReturnCode: number = runHook(branhDeleteExec, req.body, 'repo_branch_delete');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -120,7 +120,7 @@ router.post('/tag/create', (req: Request, res: Response, next: NextFunction) => 
       reason: 'Not defined executable script for this event',
     });
   }
-  const execReturnCode: number = runHook(tagCreateExec, req.body);
+  const execReturnCode: number = runHook(tagCreateExec, req.body, 'repo_tag_create');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -139,7 +139,7 @@ router.post('/tag/delete', (req: Request, res: Response, next: NextFunction) => 
       reason: 'Not defined executable script for this event',
     });
   }
-  const execReturnCode: number = runHook(tagDeleteExec, req.body);
+  const execReturnCode: number = runHook(tagDeleteExec, req.body, 'repo_tag_delete');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -158,7 +158,7 @@ router.post('/fork', (req: Request, res: Response, next: NextFunction) => {
       reason: 'Not defined executable script for this event',
     });
   }
-  const execReturnCode: number = runHook(forkExec, req.body);
+  const execReturnCode: number = runHook(forkExec, req.body, 'repo_fork');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -177,7 +177,7 @@ router.post('/release/publish', (req: Request, res: Response, next: NextFunction
       reason: 'Not defined executable script for this event',
     });
   }
-  const execReturnCode: number = runHook(releasePublishExec, req.body);
+  const execReturnCode: number = runHook(releasePublishExec, req.body, 'repo_release_publish');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -196,7 +196,7 @@ router.post('/release/update', (req: Request, res: Response, next: NextFunction)
       reason: 'Not defined executable script for this event',
     });
   }
-  const execReturnCode: number = runHook(releaseUpdateExec, req.body);
+  const execReturnCode: number = runHook(releaseUpdateExec, req.body, 'repo_release_update');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
@@ -215,7 +215,7 @@ router.post('/release/delete', (req: Request, res: Response, next: NextFunction)
       reason: 'Not defined executable script for this event',
     });
   }
-  const execReturnCode: number = runHook(releaseDeleteExec, req.body);
+  const execReturnCode: number = runHook(releaseDeleteExec, req.body, 'repo_release_delete');
   if (execReturnCode !== 0) {
     return res.status(500).json({
       status: 'Failed',
