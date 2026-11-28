@@ -19,6 +19,10 @@ declare global {
   namespace Express {
     interface Request {
       rawBody?: string;
+      // Decoded `payload` field of a form webhook, when it holds JSON.
+      formPayload?: string;
+      // Set when the signature covers formPayload itself: the hook gets this text as is.
+      exactPayload?: string;
     }
   }
 }
@@ -59,9 +63,37 @@ app.use(compression({ filter: shouldCompress }));
 app.use(cookieParser());
 
 app.use(bodyParser.json({ verify: rawBodySaver }));
-app.use(bodyParser.raw({ verify: rawBodySaver, type: () => true }));
-app.use(bodyParser.urlencoded({ extended: true, verify: rawBodySaver }));
-// app.use(express.static(path.join(__dirname, 'public')));
+app.use(bodyParser.urlencoded({ extended: false, verify: rawBodySaver }));
+// Anything still unparsed (not JSON or a form) is kept as bytes for the signature.
+app.use(
+  bodyParser.raw({
+    verify: rawBodySaver,
+    type: (req) => {
+      const contentType = req.headers['content-type'] || '';
+      return !contentType.includes('application/json') && !contentType.includes('application/x-www-form-urlencoded');
+    },
+  }),
+);
+// Gitea and GitHub can post `payload=<json>` instead of a JSON body.
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  const contentType = req.headers['content-type'] || '';
+  const body = req.body as { payload?: unknown } | undefined;
+  if (
+    contentType.includes('application/x-www-form-urlencoded') &&
+    body &&
+    typeof body === 'object' &&
+    !Buffer.isBuffer(body) &&
+    typeof body.payload === 'string'
+  ) {
+    try {
+      req.body = JSON.parse(body.payload);
+      req.formPayload = body.payload;
+    } catch {
+      // Leave the form fields in place when payload is not JSON.
+    }
+  }
+  next();
+});
 
 import { issuesRoutes, pullRoutes, repoRoutes } from './routes';
 
