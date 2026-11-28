@@ -103,8 +103,9 @@ function warnAboutArgPayload(): void {
  * The hook's own output stays on the server console (stdio 'inherit'): piped stdio would throw it away and
  * kill a hook that writes more than about 1 MB with ENOBUFS.
  *
- * Nothing here throws. A problem with the temporary files is logged and returns 1. The route then answers
- * normally and never shows an error page with a stack trace.
+ * Nothing here throws. If the payload file cannot be written, the hook is not run. The error is logged and
+ * the function returns 1. The route then sends its usual JSON failure response instead of an error page with a
+ * stack trace. If the file cannot be removed afterwards, a warning is logged and the hook's exit code is kept.
  */
 export function runHook(execPath: string, payload: unknown, event?: string): number {
   const json = JSON.stringify(payload ?? null);

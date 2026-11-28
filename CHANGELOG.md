@@ -8,7 +8,7 @@
 - **Hooks get no stdin.** Before, they inherited the server's stdin. The payload contains text that anyone can write. It is not put on stdin.
 - **Windows `.exe` hooks no longer get the payload as the first argument.** POSIX keeps `$1` for one release with a deprecation warning (it is left out above 100 KB). Windows does not. A 2.1.0 `.exe` hook that reads `argv[1]` breaks and must read `ANYCICD_PAYLOAD_FILE` instead.
 - **New:** Windows hooks can be `.bat`, `.cmd` and `.ps1` as well as `.exe` and `.com`. They are started by file type from a fixed list, never through a shell string. Other types are refused. Batch hooks must not expand the payload with `%...%`. See the README.
-- Problems with the temporary files are logged and the route answers normally. They no longer end in an error page.
+- If the payload file cannot be written (for example, the disk is full or the temp folder is not writable), the hook is not run. The error is logged and the route returns its usual JSON failure response. If the file cannot be removed after the hook ends, a warning is logged and the hook's exit code is kept.
 
 ## 2.1.0
 
