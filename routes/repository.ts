@@ -19,6 +19,15 @@ const releasePublishExec: string | null = process.env.repo_release_publish || nu
 const releaseUpdateExec: string | null = process.env.repo_release_update || null;
 const releaseDeleteExec: string | null = process.env.repo_release_delete || null;
 
+// Branch and tag events have no action. A repository event does: GitHub and
+// Gitea send creation and deletion of the repository itself as `repository`
+// with action `created` or `deleted`. Other actions must not run the hook.
+function repositoryActionOk(req: Request, action: string): boolean {
+  const event = (req.get('x-github-event') || req.get('x-gitea-event'))?.toLowerCase();
+  if (event !== 'repository') return true;
+  return req.body?.action === action;
+}
+
 router.post('/push', requireEvent('push'), (req: Request, res: Response, next: NextFunction) => {
   if (!pushExec) {
     return res.status(500).json({
@@ -38,7 +47,8 @@ router.post('/push', requireEvent('push'), (req: Request, res: Response, next: N
   });
 });
 
-router.post('/create', requireEvent('create'), (req: Request, res: Response, next: NextFunction) => {
+router.post('/create', requireEvent('create', 'repository'), (req: Request, res: Response, next: NextFunction) => {
+  if (!repositoryActionOk(req, 'created')) return res.end();
   if (!createExec) {
     return res.status(500).json({
       status: 'Failed',
@@ -57,7 +67,8 @@ router.post('/create', requireEvent('create'), (req: Request, res: Response, nex
   });
 });
 
-router.post('/delete', requireEvent('delete'), (req: Request, res: Response, next: NextFunction) => {
+router.post('/delete', requireEvent('delete', 'repository'), (req: Request, res: Response, next: NextFunction) => {
+  if (!repositoryActionOk(req, 'deleted')) return res.end();
   if (!deleteExec) {
     return res.status(500).json({
       status: 'Failed',

@@ -59,12 +59,13 @@ function hmac(body: string, secret = SECRET): string {
 
 type Provider = 'github' | 'gitea' | 'gitlab' | 'none';
 
-async function post(route: string, payload: unknown, provider: Provider = 'github', secret = SECRET) {
+async function post(route: string, payload: unknown, provider: Provider = 'github', secret = SECRET, event?: string) {
   const body = JSON.stringify(payload);
   const headers: Record<string, string> = { 'content-type': 'application/json' };
   if (provider === 'github') headers['x-hub-signature-256'] = `sha256=${hmac(body, secret)}`;
   if (provider === 'gitea') headers['x-gitea-signature'] = hmac(body, secret);
   if (provider === 'gitlab') headers['x-gitlab-token'] = secret;
+  if (event) headers[provider === 'gitea' ? 'x-gitea-event' : 'x-github-event'] = event;
   const res = await fetch(`${baseUrl}${route}`, { method: 'POST', headers, body });
   const text = await res.text();
   return { status: res.status, body: text ? JSON.parse(text) : null };
@@ -251,6 +252,54 @@ test('a push event header still runs the push hook once', posixOnly, async () =>
   assert.strictEqual(res.status, 200);
   assert.strictEqual(fs.readFileSync(received, 'utf8'), JSON.stringify(payload));
   assert.strictEqual(fs.readFileSync(runs, 'utf8'), 'x');
+});
+
+test('a repository created event runs the create hook', posixOnly, async () => {
+  const res = await post('/api/repo/create', { action: 'created', repository: { name: 'demo' } }, 'github', SECRET, 'repository');
+  assert.strictEqual(res.status, 500);
+  assert.strictEqual(res.body.reason, 'Executable exit with status code 3');
+});
+
+test('a Gitea repository created event runs the create hook', posixOnly, async () => {
+  const res = await post('/api/repo/create', { action: 'created', repository: { name: 'demo' } }, 'gitea', SECRET, 'repository');
+  assert.strictEqual(res.status, 500);
+  assert.strictEqual(res.body.reason, 'Executable exit with status code 3');
+});
+
+test('another repository action does not run the create hook', async () => {
+  const res = await post('/api/repo/create', { action: 'deleted' }, 'github', SECRET, 'repository');
+  assert.strictEqual(res.status, 200);
+  assert.strictEqual(res.body, null);
+});
+
+test('a branch create event still runs the create hook', posixOnly, async () => {
+  const res = await post('/api/repo/create', { ref: 'feature', ref_type: 'branch' }, 'github', SECRET, 'create');
+  assert.strictEqual(res.status, 500);
+  assert.strictEqual(res.body.reason, 'Executable exit with status code 3');
+});
+
+test('a repository deleted event is accepted on the delete route', async () => {
+  const res = await post('/api/repo/delete', { action: 'deleted', repository: { name: 'demo' } }, 'github', SECRET, 'repository');
+  assert.strictEqual(res.status, 500);
+  assert.strictEqual(res.body.reason, 'Not defined executable script for this event');
+});
+
+test('a repository created event does not run the delete hook', async () => {
+  const res = await post('/api/repo/delete', { action: 'created' }, 'github', SECRET, 'repository');
+  assert.strictEqual(res.status, 200);
+  assert.strictEqual(res.body, null);
+});
+
+test('a branch delete event is still accepted on the delete route', async () => {
+  const res = await post('/api/repo/delete', { ref: 'feature', ref_type: 'branch' }, 'github', SECRET, 'delete');
+  assert.strictEqual(res.status, 500);
+  assert.strictEqual(res.body.reason, 'Not defined executable script for this event');
+});
+
+test('a repository event does not run the branch create route', async () => {
+  const res = await post('/api/repo/branch/create', { action: 'created' }, 'github', SECRET, 'repository');
+  assert.strictEqual(res.status, 400);
+  assert.strictEqual(res.body.reason, 'Event "repository" does not match this route');
 });
 
 test('issue routes only run the hook for the matching action', posixOnly, async () => {

@@ -120,14 +120,14 @@ These endpoints handle various repository-related events. The full webhook paylo
   - **Payload:** [GitHub Push Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#push)
 
 - `/api/repo/create`
-  - **Description:** Triggered when a repository, branch, or tag is created.
+  - **Description:** Triggered when a repository, branch, or tag is created. A branch or tag arrives as the `create` event. A new repository arrives as the `repository` event with `action` `created`. Any other `repository` action does not run this hook.
   - **Environment Variable:** `repo_create`
-  - **Payload:** [GitHub Create Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#create)
+  - **Payload:** [GitHub Create Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#create), [GitHub Repository Event](https://docs.github.com/en/webhooks/webhook-events-and-payloads#repository)
 
 - `/api/repo/delete`
-  - **Description:** Triggered when a repository, branch, or tag is deleted.
+  - **Description:** Triggered when a repository, branch, or tag is deleted. A branch or tag arrives as the `delete` event. A deleted repository arrives as the `repository` event with `action` `deleted`. Any other `repository` action does not run this hook.
   - **Environment Variable:** `repo_delete`
-  - **Payload:** [GitHub Delete Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#delete)
+  - **Payload:** [GitHub Delete Event](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#delete), [GitHub Repository Event](https://docs.github.com/en/webhooks/webhook-events-and-payloads#repository)
 
 - `/api/repo/branch/create`
   - **Description:** Triggered when a branch is created.

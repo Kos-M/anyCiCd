@@ -7,6 +7,7 @@
 - A request whose `X-GitHub-Event` or `X-Gitea-Event` header does not match the route it was sent to now gets `400` and the hook does not run. For example a `delete` event sent to `/api/repo/push`. **If you pointed a "send me everything" webhook at one route such as `/api/repo/push`, the other events will start showing as failed deliveries.** Select only the matching event in the webhook settings, or add one webhook per route.
 - This only catches a webhook pointed at the wrong URL. The event header is not covered by the signature, so it is not replay protection.
 - A `ping` event returns `200` and does not run the hook, so a newly created GitHub webhook shows as delivered.
+- `/api/repo/create` still runs for a `repository` event whose `action` is `created`, and `/api/repo/delete` for `deleted`. GitHub and Gitea use that event when the repository itself is created or deleted. Branch and tag creates and deletes stay on the `create` and `delete` events. Other actions, such as `renamed`, do not run these hooks.
 - A request without an event header still runs the route as before. GitLab requests are not checked by event name.
 
 ### Fixed
